@@ -1,4 +1,3 @@
-import { COUNTRIES } from './data';
 import {
     createQuizState,
     advanceQuizOnCorrect,
@@ -7,8 +6,18 @@ import {
     QuizState,
 } from './gameLogic';
 
-export function initFlagQuiz(root: HTMLElement): void {
+export async function initFlagQuiz(root: HTMLElement): Promise<void> {
     root.textContent = '';
+
+    // Fetch countries from API
+    const response = await fetch('/api/countries');
+    const countriesData = await response.json();
+    
+    // Convert API response to Country format
+    const COUNTRIES = countriesData.map((country: any) => ({
+        name: country.name,
+        flagUrl: country.flag_url,
+    }));
 
     let state: QuizState = createQuizState(COUNTRIES, 4);
 
