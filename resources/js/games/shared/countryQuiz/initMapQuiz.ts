@@ -19,7 +19,7 @@ import {
 import { mountCountryQuizTemplate } from './templates';
 import { mountMapGameScreen } from './templates/mapGameScreen';
 import { renderMapRecentFoundList } from './templates/mapRecentFound';
-import { highlightCountryOnMap } from './worldMap';
+import { highlightCountryOnMap, configureWorldMapTerritories } from './worldMap';
 import { setupMapZoom } from './mapZoom';
 import { mapApiCountry, type ApiCountry } from './apiCountry';
 import type { Country } from '@/types/country';
@@ -33,11 +33,20 @@ export async function initMapQuiz(
 
     const poolQuery = mode.pool === 'sovereign'
         ? '?pool=sovereign'
-        : mode.pool === 'map'
-            ? '?pool=map'
-            : '';
-    const response = await fetch(`/api/countries${poolQuery}`);
-    const countriesData: ApiCountry[] = await response.json();
+        : mode.pool === 'world'
+            ? '?pool=world'
+            : mode.pool === 'map'
+                ? '?pool=map'
+                : '';
+    const [countriesResponse, mapMetaResponse] = await Promise.all([
+        fetch(`/api/countries${poolQuery}`),
+        fetch('/api/world-map-meta'),
+    ]);
+    const countriesData: ApiCountry[] = await countriesResponse.json();
+    const mapMeta: { territoryParents: Record<string, string> } = await mapMetaResponse.json();
+    const territoryParents = mapMeta.territoryParents ?? {};
+
+    configureWorldMapTerritories(territoryParents);
 
     const countries: Country[] = countriesData
         .map(mapApiCountry)
@@ -67,6 +76,7 @@ export async function initMapQuiz(
         inputPlaceholder: 'Tapez le nom d\'un pays...',
         poolIsoCodes,
         foundIsoCodes,
+        territoryParents,
     });
 
     const form = root.querySelector('form') as HTMLFormElement;

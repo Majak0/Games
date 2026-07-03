@@ -36,6 +36,15 @@ Route::get('/jeux/shape-quiz/{mode}', function () {
     return view('home');
 })->where('mode', 'pays|chrono|aveugle|carte');
 
+Route::get('/api/world-map-meta', function () {
+    /** @var array<string, string> $territoryParents */
+    $territoryParents = require database_path('data/map_territory_parents.php');
+
+    return response()->json([
+        'territoryParents' => $territoryParents,
+    ]);
+});
+
 Route::get('/api/countries', function (Request $request) {
     $query = Country::query();
 
@@ -45,6 +54,12 @@ Route::get('/api/countries', function (Request $request) {
 
     if ($request->query('pool') === 'map') {
         $query->where('is_on_world_map', true);
+    }
+
+    if ($request->query('pool') === 'world') {
+        /** @var list<string> $worldQuizCodes */
+        $worldQuizCodes = require database_path('data/world_quiz_iso_codes.php');
+        $query->whereIn('iso_code', $worldQuizCodes);
     }
 
     /** @var array<string, list<string>> $synonymsByIso */

@@ -5,7 +5,11 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "audit:assets": "node scripts/audit-country-assets.mjs",
+        "fix:assets": "node scripts/fix-missing-assets.mjs",
+        "generate:shapes": "node scripts/generate-missing-shapes.mjs",
+        "generate:flags": "node scripts/generate-missing-flags.mjs --defaults"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

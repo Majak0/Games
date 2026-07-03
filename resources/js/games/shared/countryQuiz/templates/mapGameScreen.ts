@@ -10,6 +10,7 @@ export interface MapGameScreenTemplateProps {
     inputPlaceholder: string;
     poolIsoCodes: Set<string>;
     foundIsoCodes: Set<string>;
+    territoryParents: Record<string, string>;
 }
 
 export function renderMapGameScreenTemplate(props: MapGameScreenTemplateProps): string {
@@ -19,8 +20,9 @@ export function renderMapGameScreenTemplate(props: MapGameScreenTemplateProps): 
         modeLabel: props.modeLabel,
         inputPlaceholder: props.inputPlaceholder,
         worldMapSvg: renderWorldMapSvg({
-            poolIsoCodes: props.poolIsoCodes,
+            quizIsoCodes: props.poolIsoCodes,
             foundIsoCodes: props.foundIsoCodes,
+            territoryParents: props.territoryParents,
         }),
     }, ['worldMapSvg']);
 }

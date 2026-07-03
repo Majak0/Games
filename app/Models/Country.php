@@ -20,6 +20,27 @@ class Country extends Model
         ];
     }
 
+    protected function flagUrl(): Attribute
+    {
+        return Attribute::get(function (?string $value): ?string {
+            if (! $this->iso_code) {
+                return $value;
+            }
+
+            $code = strtolower($this->iso_code);
+            $localPath = public_path("assets/flags/{$code}.svg");
+
+            if (file_exists($localPath)) {
+                return asset("assets/flags/{$code}.svg");
+            }
+
+            /** @var array<string, string> $overrides */
+            $overrides = require database_path('data/flag_url_overrides.php');
+
+            return $overrides[$code] ?? $value;
+        });
+    }
+
     protected function shapeUrl(): Attribute
     {
         return Attribute::get(function (): ?string {
@@ -28,6 +49,20 @@ class Country extends Model
             }
 
             $code = strtolower($this->iso_code);
+            $candidates = [$code];
+
+            if (str_contains($code, '-')) {
+                $candidates[] = explode('-', $code)[0];
+            }
+
+            foreach ($candidates as $candidate) {
+                $localPath = public_path("assets/shapes/{$candidate}.svg");
+
+                if (file_exists($localPath)) {
+                    return asset("assets/shapes/{$candidate}.svg");
+                }
+            }
+
             $mapsiconCode = str_contains($code, '-') ? explode('-', $code)[0] : $code;
 
             return "https://cdn.jsdelivr.net/gh/djaiss/mapsicon@master/all/{$mapsiconCode}/vector.svg";

@@ -108,6 +108,7 @@ return [
     'kn' => ['Saint Kitts and Nevis', 'Saint-Kitts et Nevis'],
     'mh' => ['Marshall Islands', 'Îles Marshall', 'Iles Marshall'],
     'xk' => ['Kosovo'],
+    'ps' => ['Palestine', 'Etat de Palestine', 'État de Palestine', 'State of Palestine'],
     'li' => ['Liechtenstein'],
     'sm' => ['Saint-Marin', 'San Marino'],
     'va' => ['Vatican', 'Vatican City', 'Cite du Vatican'],

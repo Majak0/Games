@@ -20,7 +20,7 @@ function renderModeCard(mode: (typeof shapeQuizModes)[number], poolCount: number
     }
 
     if (mode.id === 'carte') {
-        description = `Coloriez les ${poolCount} pays visibles sur la carte du monde.`;
+        description = `Coloriez les ${poolCount} pays du monde sur la carte.`;
     }
 
     return fillTemplate(modeCardHtml, {
@@ -33,19 +33,19 @@ function renderModeCard(mode: (typeof shapeQuizModes)[number], poolCount: number
 }
 
 export async function initShapeQuizSubmenu(root: HTMLElement): Promise<void> {
-    const [mapResponse, sovereignResponse] = await Promise.all([
-        fetch('/api/countries?pool=map'),
+    const [worldResponse, sovereignResponse] = await Promise.all([
+        fetch('/api/countries?pool=world'),
         fetch('/api/countries?pool=sovereign'),
     ]);
 
-    const mapCountries = await mapResponse.json();
+    const worldCountries = await worldResponse.json();
     const sovereignCountries = await sovereignResponse.json();
 
     mountTemplate(root, fillTemplate(modeMenuHtml, {
         modes: shapeQuizModes
             .map((mode) => {
-                const poolCount = mode.pool === 'map'
-                    ? mapCountries.length
+                const poolCount = mode.pool === 'world'
+                    ? worldCountries.length
                     : sovereignCountries.length;
 
                 return renderModeCard(mode, poolCount);

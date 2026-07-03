@@ -22,7 +22,7 @@ export interface CountryQuizGameConfig {
 
 export interface CountryQuizMode {
     title: string;
-    pool: 'all' | 'sovereign' | 'map';
+    pool: 'all' | 'sovereign' | 'map' | 'world';
     timeLimitMs?: number;
     hideVisual?: boolean;
     freeEntry?: boolean;

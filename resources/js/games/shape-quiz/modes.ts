@@ -6,7 +6,7 @@ export interface ShapeQuizMode {
     description: string;
     href: string;
     icon: string;
-    pool: 'sovereign' | 'map';
+    pool: 'sovereign' | 'map' | 'world';
     timeLimitMs?: number;
     hideVisual?: boolean;
     freeEntry?: boolean;
@@ -47,10 +47,10 @@ export const shapeQuizModes: ShapeQuizMode[] = [
     {
         id: 'carte',
         title: 'Complète la map',
-        description: 'Coloriez toute la carte du monde en trouvant chaque pays.',
+        description: 'Coloriez la carte en trouvant les 197 pays du monde.',
         href: '/jeux/shape-quiz/carte',
         icon: 'bi-globe-americas',
-        pool: 'map',
+        pool: 'world',
         mapMode: true,
         freeEntry: true,
         endOnComplete: true,

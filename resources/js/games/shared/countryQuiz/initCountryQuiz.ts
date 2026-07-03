@@ -33,9 +33,11 @@ export async function initCountryQuiz(
 
     const poolQuery = mode.pool === 'sovereign'
         ? '?pool=sovereign'
-        : mode.pool === 'map'
-            ? '?pool=map'
-            : '';
+        : mode.pool === 'world'
+            ? '?pool=world'
+            : mode.pool === 'map'
+                ? '?pool=map'
+                : '';
     const response = await fetch(`/api/countries${poolQuery}`);
     const countriesData: ApiCountry[] = await response.json();
 
