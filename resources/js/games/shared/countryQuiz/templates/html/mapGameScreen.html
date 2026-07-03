@@ -1,0 +1,45 @@
+<div class="arcade-screen flex h-screen flex-col">
+    <header class="arcade-hud-bar shrink-0">
+        <div id="remaining">Restants : {{remainingCount}}</div>
+        <div id="timer" class="font-mono tabular-nums">00min.00s.000</div>
+        <div id="score">{{scoreLabel}}</div>
+    </header>
+    <form autocomplete="off" class="relative z-10 flex flex-1 min-h-0 flex-col gap-3 px-4 py-3">
+        <p class="arcade-mode-label shrink-0 text-center">{{modeLabel}}</p>
+        <div class="arcade-map-layout min-h-0 flex-1">
+            <div class="arcade-map-panel">
+                <div class="arcade-map-zoom-bar">
+                    <button id="map-zoom-out" type="button" class="arcade-map-zoom-btn" title="Dézoomer" aria-label="Dézoomer">
+                        <i class="bi bi-dash-lg"></i>
+                    </button>
+                    <button id="map-zoom-reset" type="button" class="arcade-map-zoom-btn" title="Réinitialiser le zoom" aria-label="Réinitialiser le zoom">
+                        <i class="bi bi-arrows-angle-contract"></i>
+                    </button>
+                    <button id="map-zoom-in" type="button" class="arcade-map-zoom-btn" title="Zoomer" aria-label="Zoomer">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                </div>
+                <div id="world-map-viewport" class="arcade-world-map-viewport">
+                    <div id="world-map-transform" class="arcade-world-map-transform">
+                        {{worldMapSvg}}
+                    </div>
+                </div>
+            </div>
+            <aside class="arcade-map-recent" aria-label="Derniers pays trouvés">
+                <p class="arcade-map-recent__title">Derniers trouvés</p>
+                <ul id="recent-found-list" class="arcade-map-recent__list">
+                    <li class="arcade-map-recent__empty">Aucun pays trouvé pour l'instant.</li>
+                </ul>
+            </aside>
+        </div>
+        <div class="arcade-map-controls shrink-0 flex flex-col items-center gap-3">
+            <input id="country-input" type="text" name="countryName" autocomplete="off" spellcheck="false" class="arcade-input w-full max-w-md" placeholder="{{inputPlaceholder}}" required autofocus>
+            <div class="flex flex-row flex-wrap justify-center gap-3">
+                <button id="end-game" type="button" class="arcade-btn arcade-btn--danger">
+                    <i class="bi bi-x-circle"></i> Terminer la partie
+                </button>
+            </div>
+            <p id="feedback" class="text-sm font-bold arcade-feedback--neutral"></p>
+        </div>
+    </form>
+</div>

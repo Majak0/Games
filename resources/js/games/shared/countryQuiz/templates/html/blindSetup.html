@@ -1,0 +1,13 @@
+<div class="arcade-screen min-h-screen flex flex-col items-center justify-center p-6 gap-8">
+    <header class="relative z-10 text-center">
+        <a href="/jeux/flag-quiz" class="arcade-btn arcade-btn--skip mb-6 inline-flex">
+            <i class="bi bi-arrow-left"></i> Retour aux modes
+        </a>
+        <p class="arcade-end-badge mb-3">Saisie à l'aveugle</p>
+        <h1 class="arcade-end-title mb-2">Choisissez une liste</h1>
+        <p class="text-sm text-zinc-400">Aucun drapeau ne s'affiche : les drapeaux trouvés apparaîtront en bas.</p>
+    </header>
+    <div class="relative z-10 grid gap-4 w-full max-w-2xl">
+        {{pools}}
+    </div>
+</div>

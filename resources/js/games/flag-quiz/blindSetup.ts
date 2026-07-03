@@ -21,10 +21,10 @@ export async function initBlindSetup(root: HTMLElement): Promise<void> {
 
             return fillTemplate(blindPoolCardHtml, {
                 href: `/jeux/flag-quiz/aveugle/${option.id}`,
-                label: option.label,
+                label: option.pool === 'sovereign' ? `${count} pays` : `${count} drapeaux`,
                 description: option.pool === 'sovereign'
-                    ? `${count} pays de la liste officielle, sans affichage de drapeau.`
-                    : `${count} drapeaux : tous les pays et dépendances.`,
+                    ? `${count} pays de la liste officielle, sans indice visuel.`
+                    : `${count} drapeaux : tous les pays et dépendances, sans indice visuel.`,
                 badge: 'Jouer',
             });
         })

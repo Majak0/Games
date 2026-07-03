@@ -1,4 +1,5 @@
 import type { Country } from '@/types/country';
+import type { CountryQuizLabels, CountryQuizVisual } from '../config';
 
 export interface EmptyStateTemplateProps {
     message: string;
@@ -7,11 +8,13 @@ export interface EmptyStateTemplateProps {
 export interface GameScreenTemplateProps {
     remainingCount: number;
     scoreLabel: string;
-    flagUrl: string;
-    flagAlt?: string;
+    visualUrl: string;
     modeLabel: string;
     inputPlaceholder: string;
-    hideFlag?: boolean;
+    hideVisual?: boolean;
+    strictBlind?: boolean;
+    visual: CountryQuizVisual;
+    labels: CountryQuizLabels;
 }
 
 export interface EndScreenTemplateProps {
@@ -19,12 +22,14 @@ export interface EndScreenTemplateProps {
     heading: string;
     scoreSummary: string;
     foundCountries: Country[];
+    backHref: string;
+    visual: CountryQuizVisual;
 }
 
-export type FlagQuizTemplateProps = {
+export type CountryQuizTemplateProps = {
     emptyState: EmptyStateTemplateProps;
     game: GameScreenTemplateProps;
     end: EndScreenTemplateProps;
 };
 
-export type FlagQuizTemplateName = keyof FlagQuizTemplateProps;
+export type CountryQuizTemplateName = keyof CountryQuizTemplateProps;

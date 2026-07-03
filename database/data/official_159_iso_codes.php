@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Liste fixe des 159 pays du jeu (codes ISO 3166-1 alpha-2).
+ * Liste fixe des pays du jeu (codes ISO 3166-1 alpha-2).
  * Pays souverains du seeder, hors territoires et micro-États / petits pays exclus.
  */
 return [
@@ -19,5 +19,5 @@ return [
     'cd', 'cg', 'do', 'cz', 'ro', 'gb', 'ru', 'rw', 'sn', 'rs', 'sl',
     'sg', 'sk', 'si', 'so', 'sd', 'ss', 'lk', 'se', 'ch', 'sz', 'sy',
     'tj', 'tz', 'td', 'th', 'tg', 'tt', 'tn', 'tm', 'tr', 'ua', 'uy',
-    've', 'vn', 'ye', 'zm', 'zw',
+    've', 'vn', 'ye', 'za', 'zm', 'zw',
 ];

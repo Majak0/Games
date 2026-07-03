@@ -1,6 +1,6 @@
 import { fillTemplate } from '@/games/shared/fillTemplate';
 import type { EndScreenTemplateProps } from './types';
-import { renderFoundFlagsGridTemplate } from './foundFlags';
+import { renderFoundVisualsGridTemplate } from './foundVisuals';
 import endScreenHtml from './html/endScreen.html?raw';
 
 export function renderEndScreenTemplate({
@@ -8,13 +8,16 @@ export function renderEndScreenTemplate({
     heading,
     scoreSummary,
     foundCountries,
+    backHref,
+    visual,
 }: EndScreenTemplateProps): string {
     return fillTemplate(endScreenHtml, {
         badge,
         heading,
         scoreSummary,
-        foundFlagsGrid: foundCountries.length
-            ? renderFoundFlagsGridTemplate(foundCountries)
+        backHref,
+        foundVisualsGrid: foundCountries.length
+            ? renderFoundVisualsGridTemplate(foundCountries, visual)
             : '',
-    }, ['foundFlagsGrid']);
+    }, ['foundVisualsGrid']);
 }

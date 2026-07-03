@@ -1,10 +1,8 @@
 export interface Country {
-    id: number;
+    id?: number;
     name: string;
     flagUrl: string;
-}
-
-export interface Question {
-    correct: Country;
-    choices: Country[];
+    shapeUrl?: string;
+    isoCode?: string;
+    synonyms?: string[];
 }

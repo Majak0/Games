@@ -15,8 +15,13 @@ export function formatElapsedMicroseconds(totalMicroseconds: number): string {
     return `${String(minutes).padStart(2, '0')}min.${String(seconds).padStart(2, '0')}s.${String(fractional).padStart(3, '0')}`;
 }
 
-export function formatScoreWithTime(score: number, elapsedMicroseconds: number): string {
-    const label = score === 1 ? 'drapeau' : 'drapeaux';
+export function formatScoreWithTime(
+    score: number,
+    elapsedMicroseconds: number,
+    unitSingular = 'drapeau',
+    unitPlural = 'drapeaux'
+): string {
+    const label = score === 1 ? unitSingular : unitPlural;
 
     return `${score} ${label} en ${formatElapsedMicroseconds(elapsedMicroseconds)}`;
 }
@@ -106,10 +111,5 @@ export function createGameTimer(options?: { countdownMs?: number }): GameTimer {
         return createCountdownTimer(options.countdownMs);
     }
 
-    return createElapsedTimer();
-}
-
-/** @deprecated Use createElapsedTimer or createGameTimer */
-export function createQuizTimer(): GameTimer {
     return createElapsedTimer();
 }

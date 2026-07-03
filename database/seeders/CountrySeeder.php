@@ -58,7 +58,12 @@ class CountrySeeder extends Seeder
             'Tokelau', 'Tonga', 'Trinité-et-Tobago', 'Tristan da Cunha', 'Tunisie',
             'Turkménistan', 'Turquie', 'Tuvalu', 'Ukraine', 'Uruguay', 'Vanuatu',
             'Vatican', 'Venezuela', 'Viêt Nam', 'Wallis-et-Futuna', 'Yémen',
-            'Zambie', 'Zimbabwe'
+            'Zambie', 'Zimbabwe', 'Afrique du Sud',
+            'Salvador', 'Micronésie', 'Saint-Kitts-et-Nevis', 'Îles Marshall', 'Kosovo',
+            'Îles Cook', 'Bonaire, Saint-Eustache et Saba', 'Géorgie du Sud-et-les Îles Sandwich du Sud',
+            'Île de Man', 'Territoire britannique de l\'océan Indien', 'Îles Pitcairn',
+            'Îles Glorieuses', 'Île Juan de Nova',
+            'Île Jarvis', 'Île Baker', 'Île Howland', 'Atoll Johnston', 'Îles Midway', 'Île Wake',
         ];
 
         $codes = [
@@ -81,29 +86,37 @@ class CountrySeeder extends Seeder
             'ws', 'as', 'st', 'sn', 'rs', 'sc', 'sl', 'sg', 'sx', 'sk', 'si', 'so',
             'sd', 'ss', 'lk', 'se', 'ch', 'sr', 'sj', 'sz', 'sy', 'tj', 'tw', 'tz',
             'td', 'tf', 'th', 'tl', 'tg', 'tk', 'to', 'tt', 'ta', 'tn', 'tm', 'tr',
-            'tv', 'ua', 'uy', 'vu', 'va', 've', 'vn', 'wf', 'ye', 'zm', 'zw'
+            'tv', 'ua', 'uy', 'vu', 'va', 've', 'vn', 'wf', 'ye', 'zm', 'zw', 'za',
+            'sv', 'fm', 'kn', 'mh', 'xk', 'ck', 'bq', 'gs', 'im', 'io', 'pn', 'go', 'ju',
+            'um-dq', 'um-fq', 'um-hq', 'um-jq', 'um-mq', 'um-wq',
         ];
 
         $territoryCodes = [
             'ai', 'aq', 'aw', 'bm', 'bv', 'cx', 'nf', 'ax', 'ky', 'cc', 'fo', 'hm', 'fk', 'mp',
             'tc', 'vg', 'vi', 'hk', 'mo', 'gp', 'gf', 'mq', 'yt', 'nc', 'pf', 'pr', 'as', 'bl',
             'sx', 'mf', 'pm', 're', 'tf', 'eh', 'tk', 'ta', 'sj', 'cw', 'gg', 'je', 'gi', 'gl',
-            'gu', 'ms', 'nu', 'wf', 'sh', 'um', 'pn', 'io', 'gs',
+            'gu', 'ms', 'nu', 'wf', 'sh', 'um', 'pn', 'io', 'gs', 'ck', 'im', 'bq', 'go', 'ju',
+            'um-dq', 'um-fq', 'um-hq', 'um-jq', 'um-mq', 'um-wq',
         ];
 
-        /** @var list<string> $official159Codes */
-        $official159Codes = require database_path('data/official_159_iso_codes.php');
+        /** @var list<string> $officialCountryCodes */
+        $officialCountryCodes = require database_path('data/official_159_iso_codes.php');
+
+        /** @var list<string> $mapCountryCodes */
+        $mapCountryCodes = require database_path('data/map_iso_codes.php');
 
         for ($i = 0; $i < count($countries); $i++) {
             $isoCode = $codes[$i];
+            $flagCode = str_contains($isoCode, '-') ? explode('-', $isoCode)[0] : $isoCode;
 
             Country::updateOrCreate(
                 ['name' => $countries[$i]],
                 [
-                    'flag_url' => 'https://flagcdn.com/' . $isoCode . '.svg',
+                    'flag_url' => 'https://flagcdn.com/' . $flagCode . '.svg',
                     'iso_code' => $isoCode,
                     'is_sovereign' => ! in_array($isoCode, $territoryCodes, true),
-                    'is_official_country' => in_array($isoCode, $official159Codes, true),
+                    'is_official_country' => in_array($isoCode, $officialCountryCodes, true),
+                    'is_on_world_map' => in_array($isoCode, $mapCountryCodes, true),
                 ]
             );
         }

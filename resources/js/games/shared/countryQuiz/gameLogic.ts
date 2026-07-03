@@ -2,7 +2,6 @@ import { Country } from '@/types/country';
 
 export interface Question {
     correct: Country;
-    choices: Country[];
 }
 
 export interface QuizState {
@@ -15,16 +14,10 @@ export interface QuizState {
 
 export type Feedback = 'correct' | 'close' | 'wrong';
 
-export function buildQuestion(
-    countries: Country[],
-    numberOfChoices = 4
-): Question {
+function buildQuestion(countries: Country[]): Question {
     const correct = countries[Math.floor(Math.random() * countries.length)];
 
-    return {
-        correct,
-        choices: [correct],
-    };
+    return { correct };
 }
 
 function refillCurrentPoolFromPassed(state: QuizState): QuizState {
@@ -39,18 +32,15 @@ function refillCurrentPoolFromPassed(state: QuizState): QuizState {
     };
 }
 
-function pickNextQuestion(state: QuizState, numberOfChoices = 4): Question {
+function pickNextQuestion(state: QuizState): Question {
     const pool = refillCurrentPoolFromPassed(state).currentPool;
 
-    return buildQuestion(pool, numberOfChoices);
+    return buildQuestion(pool);
 }
 
-export function createQuizState(
-    countries: Country[],
-    numberOfChoices = 4
-): QuizState {
+export function createQuizState(countries: Country[]): QuizState {
     const currentPool = [...countries];
-    const question = buildQuestion(currentPool, numberOfChoices);
+    const question = buildQuestion(currentPool);
 
     return {
         question,
@@ -74,11 +64,17 @@ function normalize(text: string): string {
         .trim()
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/['’`-]/g, ' ')
+        .replace(/\s+/g, ' ');
 }
 
-export function checkAnswer(question: Question, userAnswer: string): boolean {
-    return normalize(userAnswer) === normalize(question.correct.name);
+function matchesCountryInput(country: Country, normalizedAnswer: string): boolean {
+    if (normalize(country.name) === normalizedAnswer) {
+        return true;
+    }
+
+    return (country.synonyms ?? []).some((synonym) => normalize(synonym) === normalizedAnswer);
 }
 
 function levenshtein(a: string, b: string): number {
@@ -114,13 +110,13 @@ export function getAnswerFeedback(
     userAnswer: string
 ): Feedback {
     const normalizedAnswer = normalize(userAnswer);
-    const normalizedCorrect = normalize(question.correct.name);
-    const distance = levenshtein(normalizedAnswer, normalizedCorrect);
 
-    if (distance === 0) {
+    if (matchesCountryInput(question.correct, normalizedAnswer)) {
         return 'correct';
     }
 
+    const normalizedCorrect = normalize(question.correct.name);
+    const distance = levenshtein(normalizedAnswer, normalizedCorrect);
     const closeThreshold = Math.max(1, Math.min(2, Math.floor(normalizedCorrect.length * 0.25)));
     if (distance <= closeThreshold) {
         return 'close';
@@ -129,10 +125,7 @@ export function getAnswerFeedback(
     return 'wrong';
 }
 
-export function advanceQuizOnCorrect(
-    state: QuizState,
-    numberOfChoices = 4
-): QuizState {
+export function advanceQuizOnCorrect(state: QuizState): QuizState {
     const found = state.question.correct;
     let nextState: QuizState = {
         ...state,
@@ -147,14 +140,11 @@ export function advanceQuizOnCorrect(
         ...nextState,
         question: isQuizComplete(nextState)
             ? nextState.question
-            : pickNextQuestion(nextState, numberOfChoices),
+            : pickNextQuestion(nextState),
     };
 }
 
-export function skipCurrentFlag(
-    state: QuizState,
-    numberOfChoices = 4
-): QuizState {
+export function skipCurrentFlag(state: QuizState): QuizState {
     const skipped = state.question.correct;
     let nextState: QuizState = {
         ...state,
@@ -166,7 +156,7 @@ export function skipCurrentFlag(
 
     return {
         ...nextState,
-        question: pickNextQuestion(nextState, numberOfChoices),
+        question: pickNextQuestion(nextState),
     };
 }
 
@@ -177,7 +167,7 @@ export function getRemainingCountries(state: QuizState): Country[] {
 export function findExactCountryMatch(input: string, countries: Country[]): Country | null {
     const normalizedAnswer = normalize(input);
 
-    return countries.find((country) => normalize(country.name) === normalizedAnswer) ?? null;
+    return countries.find((country) => matchesCountryInput(country, normalizedAnswer)) ?? null;
 }
 
 export type FreeEntryFeedback = Feedback | 'already-found';
@@ -194,7 +184,7 @@ export function getFreeEntryFeedback(state: QuizState, userAnswer: string): Free
     }
 
     for (const country of remaining) {
-        if (getAnswerFeedback({ correct: country, choices: [country] }, userAnswer) === 'close') {
+        if (getAnswerFeedback({ correct: country }, userAnswer) === 'close') {
             return 'close';
         }
     }
@@ -202,11 +192,7 @@ export function getFreeEntryFeedback(state: QuizState, userAnswer: string): Free
     return 'wrong';
 }
 
-export function advanceQuizOnFreeEntry(
-    state: QuizState,
-    country: Country,
-    numberOfChoices = 4
-): QuizState {
+export function advanceQuizOnFreeEntry(state: QuizState, country: Country): QuizState {
     let nextState: QuizState = {
         ...state,
         score: state.score + 1,
@@ -221,7 +207,7 @@ export function advanceQuizOnFreeEntry(
         ...nextState,
         question: isQuizComplete(nextState)
             ? nextState.question
-            : pickNextQuestion(nextState, numberOfChoices),
+            : pickNextQuestion(nextState),
     };
 }
 

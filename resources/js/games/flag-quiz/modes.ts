@@ -10,7 +10,7 @@ export interface FlagQuizMode {
     icon: string;
     pool: CountryPool;
     timeLimitMs?: number;
-    hideFlag?: boolean;
+    hideVisual?: boolean;
     freeEntry?: boolean;
     endOnComplete: boolean;
 }
@@ -18,7 +18,6 @@ export interface FlagQuizMode {
 export interface ChronoDurationOption {
     minutes: number;
     label: string;
-    description: string;
 }
 
 export interface BlindPoolOption {
@@ -29,10 +28,10 @@ export interface BlindPoolOption {
 }
 
 export const chronoDurationOptions: ChronoDurationOption[] = [
-    { minutes: 3, label: '3 minutes', description: 'Partie rapide et intense.' },
-    { minutes: 5, label: '5 minutes', description: 'Un bon équilibre pour s\'échauffer.' },
-    { minutes: 10, label: '10 minutes', description: 'Plus de temps pour enchaîner les bonnes réponses.' },
-    { minutes: 15, label: '15 minutes', description: 'Session longue pour viser un gros score.' },
+    { minutes: 3, label: '3 minutes' },
+    { minutes: 5, label: '5 minutes' },
+    { minutes: 10, label: '10 minutes' },
+    { minutes: 15, label: '15 minutes' },
 ];
 
 export const chronoDurationMinutes = chronoDurationOptions.map((option) => option.minutes);
@@ -40,14 +39,14 @@ export const chronoDurationMinutes = chronoDurationOptions.map((option) => optio
 export const blindPoolOptions: BlindPoolOption[] = [
     {
         id: 'tous',
-        label: '239 drapeaux',
-        description: 'Tous les drapeaux du jeu, sans aucun affiché à l\'écran.',
+        label: '259 drapeaux',
+        description: 'Tous les drapeaux du jeu, sans indice visuel.',
         pool: 'all',
     },
     {
         id: 'pays',
-        label: '159 pays',
-        description: 'Liste fixe des 159 pays du jeu.',
+        label: '160 pays',
+        description: 'Liste fixe des 160 pays du jeu.',
         pool: 'sovereign',
     },
 ];
@@ -55,8 +54,8 @@ export const blindPoolOptions: BlindPoolOption[] = [
 export const flagQuizModes: FlagQuizMode[] = [
     {
         id: 'tous',
-        title: '239 drapeaux',
-        description: 'Retrouvez les 239 drapeaux du jeu. Terminez quand vous voulez.',
+        title: '259 drapeaux',
+        description: 'Retrouvez les 259 drapeaux du jeu. Terminez quand vous voulez.',
         href: '/jeux/flag-quiz/tous',
         icon: 'bi-flag-fill',
         pool: 'all',
@@ -73,8 +72,8 @@ export const flagQuizModes: FlagQuizMode[] = [
     },
     {
         id: 'pays',
-        title: '159 pays',
-        description: 'Liste fixe des 159 pays du jeu.',
+        title: '160 pays',
+        description: 'Liste fixe des 160 pays du jeu.',
         href: '/jeux/flag-quiz/pays',
         icon: 'bi-geo-alt-fill',
         pool: 'sovereign',
@@ -83,11 +82,11 @@ export const flagQuizModes: FlagQuizMode[] = [
     {
         id: 'aveugle',
         title: 'Saisie à l\'aveugle',
-        description: 'Aucun drapeau visible : tapez les noms, ils apparaîtront en bas.',
+        description: 'Aucun drapeau visible : trouvez toute la liste sans aide.',
         href: '/jeux/flag-quiz/aveugle',
         icon: 'bi-eye-slash-fill',
         pool: 'all',
-        hideFlag: true,
+        hideVisual: true,
         freeEntry: true,
         endOnComplete: true,
     },
@@ -150,7 +149,7 @@ export function getFlagQuizModeFromPath(pathname: string): FlagQuizMode | null {
         return {
             ...mode,
             pool: poolOption.pool,
-            hideFlag: true,
+            hideVisual: true,
             freeEntry: true,
             title: `Saisie à l'aveugle · ${poolOption.label}`,
         };

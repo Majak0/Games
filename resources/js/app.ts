@@ -1,3 +1,11 @@
+import {
+    getShapeQuizModeFromPath,
+    isShapeChronoSetupPath,
+    isShapeQuizSubmenuPath,
+} from '@/games/shape-quiz/modes';
+import { initShapeQuiz } from '@/games/shape-quiz';
+import { initShapeChronoSetup } from '@/games/shape-quiz/chronoSetup';
+import { initShapeQuizSubmenu } from '@/games/shape-quiz/submenu';
 import { getFlagQuizModeFromPath, isBlindSetupPath, isChronoSetupPath, isFlagQuizSubmenuPath } from '@/games/flag-quiz/modes';
 import { initFlagQuiz } from '@/games/flag-quiz';
 import { initBlindSetup } from '@/games/flag-quiz/blindSetup';
@@ -13,6 +21,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const { pathname } = window.location;
+
+    if (isShapeQuizSubmenuPath(pathname)) {
+        await initShapeQuizSubmenu(root);
+        return;
+    }
+
+    if (isShapeChronoSetupPath(pathname)) {
+        initShapeChronoSetup(root);
+        return;
+    }
+
+    const shapeMode = getShapeQuizModeFromPath(pathname);
+
+    if (shapeMode) {
+        await initShapeQuiz(root, shapeMode);
+        return;
+    }
 
     if (isFlagQuizSubmenuPath(pathname)) {
         await initFlagQuizSubmenu(root);

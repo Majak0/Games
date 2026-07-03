@@ -4,11 +4,17 @@ import { flagQuizModes } from './modes';
 import modeMenuHtml from './templates/html/modeMenu.html?raw';
 import modeCardHtml from './templates/html/modeCard.html?raw';
 
-function renderModeCard(mode: (typeof flagQuizModes)[number], poolCount?: number): string {
+function renderModeCard(
+    mode: (typeof flagQuizModes)[number],
+    allCount: number,
+    sovereignCount: number
+): string {
     let description = mode.description;
+    let title = mode.title;
 
     if (mode.id === 'tous') {
-        description = `Retrouvez les ${poolCount} drapeaux du jeu. Terminez quand vous voulez.`;
+        title = `${allCount} drapeaux`;
+        description = `Retrouvez les ${allCount} drapeaux du jeu. Terminez quand vous voulez.`;
     }
 
     if (mode.id === 'chrono') {
@@ -16,17 +22,18 @@ function renderModeCard(mode: (typeof flagQuizModes)[number], poolCount?: number
     }
 
     if (mode.id === 'aveugle') {
-        description = 'Choisissez une liste : 239 drapeaux ou 159 pays.';
+        description = `Choisissez une liste : ${allCount} drapeaux ou ${sovereignCount} pays.`;
     }
 
     if (mode.id === 'pays') {
-        description = `Uniquement les ${poolCount} pays sans dépendances ni territoires.`;
+        title = `${sovereignCount} pays`;
+        description = `Uniquement les ${sovereignCount} pays sans dépendances ni territoires.`;
     }
 
     return fillTemplate(modeCardHtml, {
         href: mode.href,
         icon: mode.icon,
-        title: mode.title,
+        title,
         description,
         badge: mode.id === 'chrono' ? 'Chrono' : mode.id === 'aveugle' ? 'Aveugle' : 'Jouer',
     });
@@ -43,13 +50,7 @@ export async function initFlagQuizSubmenu(root: HTMLElement): Promise<void> {
 
     mountTemplate(root, fillTemplate(modeMenuHtml, {
         modes: flagQuizModes
-            .map((mode) => {
-                const poolCount = mode.pool === 'sovereign'
-                    ? sovereignCountries.length
-                    : allCountries.length;
-
-                return renderModeCard(mode, poolCount);
-            })
+            .map((mode) => renderModeCard(mode, allCountries.length, sovereignCountries.length))
             .join(''),
     }, ['modes']));
 }

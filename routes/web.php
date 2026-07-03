@@ -24,6 +24,18 @@ Route::get('/jeux/flag-quiz/{mode}', function () {
     return view('home');
 })->where('mode', 'tous|chrono|pays|aveugle');
 
+Route::get('/jeux/shape-quiz', function () {
+    return view('home');
+});
+
+Route::get('/jeux/shape-quiz/chrono/{minutes}', function () {
+    return view('home');
+})->where('minutes', '3|5|10|15');
+
+Route::get('/jeux/shape-quiz/{mode}', function () {
+    return view('home');
+})->where('mode', 'pays|chrono|aveugle|carte');
+
 Route::get('/api/countries', function (Request $request) {
     $query = Country::query();
 
@@ -31,5 +43,25 @@ Route::get('/api/countries', function (Request $request) {
         $query->where('is_official_country', true);
     }
 
-    return response()->json($query->orderBy('name')->get());
+    if ($request->query('pool') === 'map') {
+        $query->where('is_on_world_map', true);
+    }
+
+    /** @var array<string, list<string>> $synonymsByIso */
+    $synonymsByIso = require database_path('data/country_synonyms.php');
+
+    return response()->json(
+        $query->orderBy('name')->get()->map(function (Country $country) use ($synonymsByIso) {
+            $iso = strtolower($country->iso_code ?? '');
+
+            return [
+                'id' => $country->id,
+                'name' => $country->name,
+                'flag_url' => $country->flag_url,
+                'iso_code' => $country->iso_code,
+                'shape_url' => $country->shape_url,
+                'synonyms' => $synonymsByIso[$iso] ?? [],
+            ];
+        })
+    );
 });
