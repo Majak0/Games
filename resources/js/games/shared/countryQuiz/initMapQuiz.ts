@@ -23,6 +23,7 @@ import { highlightCountryOnMap, configureWorldMapTerritories } from './worldMap'
 import { setupMapZoom } from './mapZoom';
 import { mapApiCountry, type ApiCountry } from './apiCountry';
 import type { Country } from '@/types/country';
+import { attachScoreSaveStatus, scoreSaveSectionHtml } from '@/scores/attachScoreSaveStatus';
 
 export async function initMapQuiz(
     root: HTMLElement,
@@ -171,10 +172,13 @@ export async function initMapQuiz(
                 config.labels.scoreUnitSingular,
                 config.labels.scoreUnitPlural
             ),
+            scoreSaveSection: scoreSaveSectionHtml,
             foundCountries: state.foundCountries,
             backHref: config.backHref,
             visual: config.visual,
         });
+
+        void attachScoreSaveStatus(root, state.score, finalElapsedMicroseconds, completed);
     }
 
     function endGame(completed: boolean, heading?: string): void {

@@ -23,6 +23,7 @@ import {
 import { mountCountryQuizTemplate, renderFoundVisualsBarTemplate } from './templates';
 import { mapApiCountry, type ApiCountry } from './apiCountry';
 import type { Country } from '@/types/country';
+import { attachScoreSaveStatus, scoreSaveSectionHtml } from '@/scores/attachScoreSaveStatus';
 
 export async function initCountryQuiz(
     root: HTMLElement,
@@ -173,10 +174,13 @@ export async function initCountryQuiz(
                 config.labels.scoreUnitSingular,
                 config.labels.scoreUnitPlural
             ),
+            scoreSaveSection: scoreSaveSectionHtml,
             foundCountries: state.foundCountries,
             backHref: config.backHref,
             visual: config.visual,
         });
+
+        void attachScoreSaveStatus(root, state.score, finalElapsedMicroseconds, completed);
     }
 
     function endGame(completed: boolean, heading?: string): void {

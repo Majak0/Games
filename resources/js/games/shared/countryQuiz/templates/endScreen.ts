@@ -7,6 +7,7 @@ export function renderEndScreenTemplate({
     badge,
     heading,
     scoreSummary,
+    scoreSaveSection = '',
     foundCountries,
     backHref,
     visual,
@@ -15,9 +16,10 @@ export function renderEndScreenTemplate({
         badge,
         heading,
         scoreSummary,
+        scoreSaveSection,
         backHref,
         foundVisualsGrid: foundCountries.length
             ? renderFoundVisualsGridTemplate(foundCountries, visual)
             : '',
-    }, ['foundVisualsGrid']);
+    }, ['foundVisualsGrid', 'scoreSaveSection']);
 }

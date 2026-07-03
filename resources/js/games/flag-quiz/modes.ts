@@ -45,8 +45,8 @@ export const blindPoolOptions: BlindPoolOption[] = [
     },
     {
         id: 'pays',
-        label: '160 pays',
-        description: 'Liste fixe des 160 pays du jeu.',
+        label: '197 pays',
+        description: 'Liste fixe des 197 pays du jeu.',
         pool: 'sovereign',
     },
 ];
@@ -72,8 +72,8 @@ export const flagQuizModes: FlagQuizMode[] = [
     },
     {
         id: 'pays',
-        title: '160 pays',
-        description: 'Liste fixe des 160 pays du jeu.',
+        title: '197 pays',
+        description: 'Liste fixe des 197 pays du jeu.',
         href: '/jeux/flag-quiz/pays',
         icon: 'bi-geo-alt-fill',
         pool: 'sovereign',

@@ -5,9 +5,11 @@ import modeMenuHtml from './templates/html/modeMenu.html?raw';
 import modeCardHtml from './templates/html/modeCard.html?raw';
 
 function renderModeCard(mode: (typeof shapeQuizModes)[number], poolCount: number): string {
+    let title = mode.title;
     let description = mode.description;
 
     if (mode.id === 'pays') {
+        title = `${poolCount} pays`;
         description = `Retrouvez les ${poolCount} formes de pays. Terminez quand vous voulez.`;
     }
 
@@ -26,7 +28,7 @@ function renderModeCard(mode: (typeof shapeQuizModes)[number], poolCount: number
     return fillTemplate(modeCardHtml, {
         href: mode.href,
         icon: mode.icon,
-        title: mode.title,
+        title,
         description,
         badge: mode.id === 'chrono' ? 'Chrono' : mode.id === 'aveugle' ? 'Aveugle' : mode.id === 'carte' ? 'Map' : 'Jouer',
     });

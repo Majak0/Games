@@ -12,8 +12,15 @@ import { initBlindSetup } from '@/games/flag-quiz/blindSetup';
 import { initChronoSetup } from '@/games/flag-quiz/chronoSetup';
 import { initFlagQuizSubmenu } from '@/games/flag-quiz/submenu';
 import { initHomeMenu } from '@/games/home/templates';
+import { initLoginPage } from '@/account/initLogin';
+import { initRegisterPage } from '@/account/initRegister';
+import { initProfilePage } from '@/account/initProfile';
+import { initLeaderboardPage } from '@/account/initLeaderboard';
+import { initAccountFab } from '@/shared/accountFab';
 
 document.addEventListener('DOMContentLoaded', async () => {
+    await initAccountFab();
+
     const root = document.getElementById('app');
 
     if (!root) {
@@ -21,6 +28,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const { pathname } = window.location;
+
+    if (pathname === '/compte/connexion' || pathname === '/compte/connexion/') {
+        initLoginPage(root);
+        return;
+    }
+
+    if (pathname === '/compte/inscription' || pathname === '/compte/inscription/') {
+        initRegisterPage(root);
+        return;
+    }
+
+    if (pathname === '/compte' || pathname === '/compte/') {
+        await initProfilePage(root);
+        return;
+    }
+
+    const leaderboardMatch = pathname.match(/^\/classement\/(flag-quiz|shape-quiz)\/([a-z0-9:]+)\/?$/);
+
+    if (leaderboardMatch) {
+        await initLeaderboardPage(root, leaderboardMatch[1], leaderboardMatch[2]);
+        return;
+    }
 
     if (isShapeQuizSubmenuPath(pathname)) {
         await initShapeQuizSubmenu(root);

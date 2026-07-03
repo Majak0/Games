@@ -17,8 +17,8 @@ export interface ShapeQuizMode {
 export const shapeQuizModes: ShapeQuizMode[] = [
     {
         id: 'pays',
-        title: '160 pays',
-        description: 'Retrouvez les 160 formes de pays. Terminez quand vous voulez.',
+        title: '197 pays',
+        description: 'Retrouvez les 197 formes de pays. Terminez quand vous voulez.',
         href: '/jeux/shape-quiz/pays',
         icon: 'bi-map-fill',
         pool: 'sovereign',

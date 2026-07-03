@@ -21,6 +21,7 @@ export interface EndScreenTemplateProps {
     badge: string;
     heading: string;
     scoreSummary: string;
+    scoreSaveSection?: string;
     foundCountries: Country[];
     backHref: string;
     visual: CountryQuizVisual;

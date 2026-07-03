@@ -1,0 +1,26 @@
+<div class="arcade-screen min-h-screen flex flex-col p-6 gap-6">
+    <header class="relative z-10 text-center max-w-3xl mx-auto">
+        <p class="arcade-end-badge mb-3">Classement</p>
+        <h1 class="arcade-end-title mb-2">{{label}}</h1>
+        <p class="text-sm text-zinc-400">Top 100 public</p>
+        <p class="mt-4">
+            <a href="/compte" class="arcade-btn arcade-btn--skip inline-flex"><i class="bi bi-person"></i> Mon compte</a>
+        </p>
+    </header>
+    <div class="relative z-10 w-full max-w-3xl mx-auto arcade-panel overflow-x-auto">
+        <table class="arcade-score-table w-full text-sm">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Pseudo</th>
+                    <th>Score</th>
+                    <th>Temps</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{rows}}
+            </tbody>
+        </table>
+        {{emptyState}}
+    </div>
+</div>

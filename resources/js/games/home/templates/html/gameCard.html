@@ -1,10 +1,13 @@
-<a href="{{href}}" class="arcade-game-card {{cardModifier}}">
-    <div class="arcade-game-card__icon">
-        <i class="bi {{icon}}"></i>
-    </div>
-    <div class="arcade-game-card__content">
-        <h2 class="arcade-game-card__title">{{title}}</h2>
-        <p class="arcade-game-card__description">{{description}}</p>
-    </div>
-    <span class="arcade-game-card__badge">{{badge}}</span>
-</a>
+<div class="arcade-game-card-wrap">
+    <a href="{{href}}" class="arcade-game-card {{cardModifier}}">
+        <div class="arcade-game-card__icon">
+            <i class="bi {{icon}}"></i>
+        </div>
+        <div class="arcade-game-card__content">
+            <h2 class="arcade-game-card__title">{{title}}</h2>
+            <p class="arcade-game-card__description">{{description}}</p>
+        </div>
+        <span class="arcade-game-card__badge">{{badge}}</span>
+    </a>
+    {{leaderboardButton}}
+</div>

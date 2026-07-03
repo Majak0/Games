@@ -500,6 +500,8 @@
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 1rem;
+    flex: 1;
+    min-width: 0;
     padding: 1rem 1.25rem;
     border-radius: 0.75rem;
     border: 1px solid rgb(57 255 20 / 35%);
@@ -571,6 +573,142 @@
 
 .arcade-game-card--duration {
     grid-template-columns: auto 1fr auto;
+}
+
+.arcade-game-card-wrap {
+    display: flex;
+    align-items: stretch;
+    gap: 0.75rem;
+}
+
+.arcade-podium-btn {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    align-self: center;
+    aspect-ratio: 1;
+    border-radius: 9999px;
+    border: 2px solid rgb(255 193 7 / 45%);
+    background: rgb(13 1 24 / 92%);
+    color: #ffc107;
+    font-size: 1.15rem;
+    box-shadow: 0 0 16px rgb(255 193 7 / 20%);
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.arcade-podium-btn:hover {
+    transform: scale(1.06);
+    border-color: rgb(255 193 7 / 80%);
+    box-shadow: 0 0 22px rgb(255 193 7 / 35%);
+}
+
+body.arcade-modal-open {
+    overflow: hidden;
+}
+
+.arcade-modal[hidden] {
+    display: none !important;
+}
+
+.arcade-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.arcade-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgb(0 0 0 / 72%);
+    backdrop-filter: blur(4px);
+}
+
+.arcade-modal__panel {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 42rem);
+    max-height: min(90vh, 720px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.arcade-modal__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.arcade-modal__title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fafafa;
+}
+
+.arcade-modal__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    border: 1px solid rgb(161 161 170 / 35%);
+    background: rgb(255 255 255 / 5%);
+    color: #fafafa;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.arcade-modal__close:hover {
+    border-color: rgb(255 255 255 / 45%);
+    background: rgb(255 255 255 / 10%);
+}
+
+.arcade-tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.25rem;
+    border-radius: 0.65rem;
+    border: 1px solid rgb(191 0 255 / 30%);
+    background: rgb(0 0 0 / 25%);
+}
+
+.arcade-tabs__tab {
+    flex: 1;
+    border-radius: 0.45rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgb(161 161 170);
+    background: transparent;
+    border: 1px solid transparent;
+    transition:
+        color 0.15s ease,
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.arcade-tabs__tab:hover {
+    color: #fafafa;
+}
+
+.arcade-tabs__tab--active {
+    color: var(--color-neon-green);
+    border-color: rgb(57 255 20 / 45%);
+    background: rgb(57 255 20 / 10%);
+    box-shadow: 0 0 12px rgb(57 255 20 / 15%);
 }
 
 .arcade-world-map-frame {
@@ -838,4 +976,87 @@
 
 .arcade-world-map__country--found:hover {
     fill: var(--color-neon-green);
+}
+
+.arcade-panel {
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(191 0 255 / 30%);
+    background: rgb(13 1 24 / 80%);
+}
+
+.arcade-score-table th,
+.arcade-score-table td {
+    padding: 0.65rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid rgb(255 255 255 / 8%);
+}
+
+.arcade-score-table th {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-neon-green);
+}
+
+.arcade-score-save a {
+    margin-left: 0.35rem;
+}
+
+#account-fab {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 100;
+}
+
+.arcade-account-fab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 9999px;
+    border: 2px solid rgb(191 0 255 / 45%);
+    background: rgb(13 1 24 / 92%);
+    color: var(--color-neon-green);
+    box-shadow: 0 0 18px rgb(191 0 255 / 25%);
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.arcade-account-fab:hover {
+    transform: scale(1.06);
+    border-color: rgb(57 255 20 / 70%);
+    box-shadow: 0 0 22px rgb(57 255 20 / 35%);
+}
+
+.arcade-account-fab--connected {
+    border-color: rgb(57 255 20 / 55%);
+}
+
+.arcade-section-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-neon-green);
+}
+
+.arcade-select {
+    width: 100%;
+    border-radius: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.95rem;
+    color: #fafafa;
+    background: rgb(13 1 24 / 92%);
+    border: 2px solid rgb(191 0 255 / 40%);
+    outline: none;
+}
+
+.arcade-select:focus {
+    border-color: rgb(57 255 20 / 70%);
+    box-shadow: 0 0 14px rgb(57 255 20 / 25%);
 }

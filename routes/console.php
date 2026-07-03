@@ -32,7 +32,7 @@ Artisan::command('countries:audit-assets {--pool=all : all, world, sovereign ou 
         $worldQuizCodes = require database_path('data/world_quiz_iso_codes.php');
         $query->whereIn('iso_code', $worldQuizCodes);
     } elseif ($pool === 'sovereign') {
-        $query->where('is_official_country', true);
+        $query->where('is_sovereign', true);
     } elseif ($pool === 'map') {
         $query->where('is_on_world_map', true);
     }
@@ -121,4 +121,13 @@ Artisan::command('countries:audit-assets {--pool=all : all, world, sovereign ou 
 
     return ($missingFlags === [] && $missingShapes === []) ? 0 : 1;
 })->purpose('Vérifie les drapeaux et formes inaccessibles par pays');
+
+Artisan::command('scores:prune {--keep=100 : Nombre de scores conservés par mode}', function () {
+    $keep = max(1, (int) $this->option('keep'));
+    $deleted = app(\App\Services\GameScoreService::class)->pruneBeyondTop($keep);
+
+    $this->info("Purge terminée : {$deleted} score(s) supprimé(s) hors top {$keep} par mode.");
+
+    return 0;
+})->purpose('Supprime les scores au-delà du top N pour chaque mode');
 
