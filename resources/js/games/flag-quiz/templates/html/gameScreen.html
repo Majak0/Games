@@ -1,0 +1,25 @@
+<div class="arcade-screen flex h-screen flex-col">
+    <header class="arcade-hud-bar shrink-0">
+        <div id="remaining">Restants : {{remainingCount}}</div>
+        <div id="timer" class="font-mono tabular-nums">00min.00s.000</div>
+        <div id="score">{{scoreLabel}}</div>
+    </header>
+    <form autocomplete="off" class="relative z-10 flex flex-1 min-h-0 flex-col items-center justify-center gap-5 px-4">
+        <p class="arcade-mode-label">{{modeLabel}}</p>
+        {{flagSection}}
+        <input id="country-input" type="text" name="countryName" autocomplete="off" spellcheck="false" class="arcade-input" placeholder="{{inputPlaceholder}}" required autofocus>
+        <div class="flex flex-row flex-wrap justify-center gap-3">
+            <button id="skip-flag" type="button" class="arcade-btn arcade-btn--skip">
+                <i class="bi bi-arrow-counterclockwise"></i> Passer ce drapeau
+            </button>
+            <button id="end-game" type="button" class="arcade-btn arcade-btn--danger">
+                <i class="bi bi-x-circle"></i> Terminer la partie
+            </button>
+        </div>
+        <p id="feedback" class="text-sm font-bold arcade-feedback--neutral"></p>
+    </form>
+    <footer class="arcade-footer shrink-0 px-4 py-3">
+        <p class="text-xs text-neon-green mb-2 uppercase tracking-widest">Drapeaux trouvés</p>
+        <div id="found-list" class="arcade-found-list flex flex-wrap gap-1.5"></div>
+    </footer>
+</div>

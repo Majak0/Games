@@ -8,7 +8,8 @@ export interface Question {
 export interface QuizState {
     question: Question;
     score: number;
-    remainingCountries: Country[];
+    currentPool: Country[];
+    passedCountries: Country[];
     foundCountries: Country[];
 }
 
@@ -26,19 +27,46 @@ export function buildQuestion(
     };
 }
 
+function refillCurrentPoolFromPassed(state: QuizState): QuizState {
+    if (state.currentPool.length > 0 || state.passedCountries.length === 0) {
+        return state;
+    }
+
+    return {
+        ...state,
+        currentPool: [...state.passedCountries],
+        passedCountries: [],
+    };
+}
+
+function pickNextQuestion(state: QuizState, numberOfChoices = 4): Question {
+    const pool = refillCurrentPoolFromPassed(state).currentPool;
+
+    return buildQuestion(pool, numberOfChoices);
+}
+
 export function createQuizState(
     countries: Country[],
     numberOfChoices = 4
 ): QuizState {
-    const remainingCountries = [...countries];
-    const question = buildQuestion(remainingCountries, numberOfChoices);
+    const currentPool = [...countries];
+    const question = buildQuestion(currentPool, numberOfChoices);
 
     return {
         question,
         score: 0,
-        remainingCountries,
+        currentPool,
+        passedCountries: [],
         foundCountries: [],
     };
+}
+
+export function getRemainingCount(state: QuizState): number {
+    return state.currentPool.length + state.passedCountries.length;
+}
+
+export function isQuizComplete(state: QuizState): boolean {
+    return getRemainingCount(state) === 0;
 }
 
 function normalize(text: string): string {
@@ -105,23 +133,98 @@ export function advanceQuizOnCorrect(
     state: QuizState,
     numberOfChoices = 4
 ): QuizState {
-    const foundCountries = [...state.foundCountries, state.question.correct];
-    const remainingCountries = state.remainingCountries.filter(
-        (country) => country.name !== state.question.correct.name
-    );
+    const found = state.question.correct;
+    let nextState: QuizState = {
+        ...state,
+        score: state.score + 1,
+        foundCountries: [...state.foundCountries, found],
+        currentPool: state.currentPool.filter((country) => country.name !== found.name),
+    };
 
-    const question = remainingCountries.length
-        ? buildQuestion(remainingCountries, numberOfChoices)
-        : state.question;
+    nextState = refillCurrentPoolFromPassed(nextState);
 
     return {
-        question,
+        ...nextState,
+        question: isQuizComplete(nextState)
+            ? nextState.question
+            : pickNextQuestion(nextState, numberOfChoices),
+    };
+}
+
+export function skipCurrentFlag(
+    state: QuizState,
+    numberOfChoices = 4
+): QuizState {
+    const skipped = state.question.correct;
+    let nextState: QuizState = {
+        ...state,
+        currentPool: state.currentPool.filter((country) => country.name !== skipped.name),
+        passedCountries: [...state.passedCountries, skipped],
+    };
+
+    nextState = refillCurrentPoolFromPassed(nextState);
+
+    return {
+        ...nextState,
+        question: pickNextQuestion(nextState, numberOfChoices),
+    };
+}
+
+export function getRemainingCountries(state: QuizState): Country[] {
+    return [...state.currentPool, ...state.passedCountries];
+}
+
+export function findExactCountryMatch(input: string, countries: Country[]): Country | null {
+    const normalizedAnswer = normalize(input);
+
+    return countries.find((country) => normalize(country.name) === normalizedAnswer) ?? null;
+}
+
+export type FreeEntryFeedback = Feedback | 'already-found';
+
+export function getFreeEntryFeedback(state: QuizState, userAnswer: string): FreeEntryFeedback {
+    if (findExactCountryMatch(userAnswer, state.foundCountries)) {
+        return 'already-found';
+    }
+
+    const remaining = getRemainingCountries(state);
+
+    if (findExactCountryMatch(userAnswer, remaining)) {
+        return 'correct';
+    }
+
+    for (const country of remaining) {
+        if (getAnswerFeedback({ correct: country, choices: [country] }, userAnswer) === 'close') {
+            return 'close';
+        }
+    }
+
+    return 'wrong';
+}
+
+export function advanceQuizOnFreeEntry(
+    state: QuizState,
+    country: Country,
+    numberOfChoices = 4
+): QuizState {
+    let nextState: QuizState = {
+        ...state,
         score: state.score + 1,
-        remainingCountries,
-        foundCountries,
+        foundCountries: [...state.foundCountries, country],
+        currentPool: state.currentPool.filter((entry) => entry.name !== country.name),
+        passedCountries: state.passedCountries.filter((entry) => entry.name !== country.name),
+    };
+
+    nextState = refillCurrentPoolFromPassed(nextState);
+
+    return {
+        ...nextState,
+        question: isQuizComplete(nextState)
+            ? nextState.question
+            : pickNextQuestion(nextState, numberOfChoices),
     };
 }
 
 export function getScoreLabel(score: number): string {
-    return `Pays trouvés : ${score}`;
+    return `Trouvés : ${score}`;
 }

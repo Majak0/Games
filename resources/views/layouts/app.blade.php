@@ -7,7 +7,7 @@
         @fonts
         @vite(['resources/css/app.css', 'resources/js/app.ts'])
     </head>
-    <body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased">
+    <body class="min-h-screen bg-arcade-bg text-zinc-100 antialiased">
         @yield('content')
     </body>
 </html>

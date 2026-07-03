@@ -1,49 +1,73 @@
 import {
     createQuizState,
     advanceQuizOnCorrect,
+    advanceQuizOnFreeEntry,
     getAnswerFeedback,
+    findExactCountryMatch,
+    getFreeEntryFeedback,
+    getRemainingCount,
+    getRemainingCountries,
     getScoreLabel,
+    isQuizComplete,
+    skipCurrentFlag,
     QuizState,
 } from './gameLogic';
+import type { FlagQuizMode } from './modes';
+import {
+    createGameTimer,
+    formatElapsedMicroseconds,
+    formatScoreWithTime,
+    type GameTimer,
+} from './timer';
+import { mountFlagQuizTemplate, renderFoundFlagsBarTemplate } from './templates';
 
-export async function initFlagQuiz(root: HTMLElement): Promise<void> {
+export async function initFlagQuiz(root: HTMLElement, mode: FlagQuizMode): Promise<void> {
     root.textContent = '';
 
-    // Fetch countries from API
-    const response = await fetch('/api/countries');
+    const poolQuery = mode.pool === 'sovereign' ? '?pool=sovereign' : '';
+    const response = await fetch(`/api/countries${poolQuery}`);
     const countriesData = await response.json();
-    
-    // Convert API response to Country format
-    const COUNTRIES = countriesData.map((country: any) => ({
+
+    const COUNTRIES = countriesData.map((country: { name: string; flag_url: string }) => ({
         name: country.name,
         flagUrl: country.flag_url,
     }));
 
-    let state: QuizState = createQuizState(COUNTRIES, 4);
+    if (COUNTRIES.length === 0) {
+        mountFlagQuizTemplate(root, 'emptyState', {
+            message: 'Aucun drapeau disponible. Lancez le seeder des pays.',
+        });
+        return;
+    }
 
-    root.innerHTML = `
-    <div class="relative h-screen">
-        <div id="score" class="absolute top-4 right-4 bg-black/50 text-white rounded-full px-4 py-2 text-sm font-bold">${getScoreLabel(state.score)}</div>
-        <div id="remaining" class="absolute top-4 left-4 bg-black/50 text-white rounded-full px-4 py-2 text-sm font-bold">Restants : ${state.remainingCountries.length}</div>
-        <form autocomplete="off" class="h-full flex flex-col items-center justify-center gap-4">
-            <img id="flag-image" src="${state.question.correct.flagUrl}" alt="Flag à deviner" class="w-24 h-16">
-            <input id="country-input" type="text" name="countryName" autocomplete="off" spellcheck="false" class="border border-gray-300 rounded-md p-2" placeholder="Quel est le nom de ce pays ?" required autofocus>
-            <p id="feedback" class="text-sm font-bold"></p>
-        </form>
-        <div class="absolute left-0 right-0 bottom-0 border-t border-white/10 bg-black/60 px-4 py-3">
-            <p class="text-xs text-gray-300 mb-2">Drapeaux trouvés :</p>
-            <div id="found-list" class="flex flex-wrap gap-1"></div>
-        </div>
-    </div>
-    `;
+    let state: QuizState = createQuizState(COUNTRIES, 4);
+    const timer: GameTimer = createGameTimer(
+        mode.timeLimitMs ? { countdownMs: mode.timeLimitMs } : undefined
+    );
+    let animationFrameId = 0;
+    let gameEnded = false;
+
+    mountFlagQuizTemplate(root, 'game', {
+        remainingCount: getRemainingCount(state),
+        scoreLabel: getScoreLabel(state.score),
+        flagUrl: state.question.correct.flagUrl,
+        modeLabel: mode.title,
+        hideFlag: mode.hideFlag,
+        inputPlaceholder: mode.freeEntry
+            ? 'Tapez le nom d\'un pays...'
+            : 'Quel est le nom de ce pays ?',
+    });
 
     const form = root.querySelector('form') as HTMLFormElement;
     const input = root.querySelector('#country-input') as HTMLInputElement;
     const feedback = root.querySelector('#feedback') as HTMLParagraphElement;
     const scoreDisplay = root.querySelector('#score') as HTMLDivElement;
+    const timerDisplay = root.querySelector('#timer') as HTMLDivElement;
     const remainingDisplay = root.querySelector('#remaining') as HTMLDivElement;
     const foundList = root.querySelector('#found-list') as HTMLDivElement;
-    const flagImage = root.querySelector('#flag-image') as HTMLImageElement;
+    const flagImage = root.querySelector('#flag-image') as HTMLImageElement | null;
+    const skipButton = root.querySelector('#skip-flag') as HTMLButtonElement;
+    const endGameButton = root.querySelector('#end-game') as HTMLButtonElement;
 
     function updateFeedback(message: string, colorClass: string): void {
         if (!feedback) {
@@ -67,19 +91,47 @@ export async function initFlagQuiz(root: HTMLElement): Promise<void> {
             return;
         }
 
-        remainingDisplay.textContent = `Restants : ${state.remainingCountries.length}`;
+        remainingDisplay.textContent = `Restants : ${getRemainingCount(state)}`;
     }
 
-    function loadQuestion(): void {
-        if (!flagImage) {
+    function updateTimerDisplay(): void {
+        if (!timerDisplay) {
             return;
         }
 
-        flagImage.src = state.question.correct.flagUrl;
-        flagImage.alt = 'Drapeau du pays à deviner';
+        timerDisplay.textContent = formatElapsedMicroseconds(timer.getDisplayMicroseconds());
+
+        if (timer.hasExpired()) {
+            endGame(false, 'Temps écoulé !');
+            return;
+        }
+
+        if (timer.isRunning()) {
+            animationFrameId = requestAnimationFrame(updateTimerDisplay);
+        }
+    }
+
+    function stopTimer(): number {
+        cancelAnimationFrame(animationFrameId);
+
+        return timer.stop();
+    }
+
+    function skipFlag(): void {
+        state = skipCurrentFlag(state, 4);
+        loadQuestion();
+        updateFeedback('Pays reporté.', 'arcade-feedback--neutral');
+    }
+
+    function loadQuestion(): void {
+        if (flagImage) {
+            flagImage.src = state.question.correct.flagUrl;
+            flagImage.alt = 'Drapeau du pays à deviner';
+        }
+
         input.value = '';
         input.focus();
-        updateFeedback('', 'text-gray-600');
+        updateFeedback('', 'arcade-feedback--neutral');
     }
 
     function renderFoundFlags(): void {
@@ -87,38 +139,85 @@ export async function initFlagQuiz(root: HTMLElement): Promise<void> {
             return;
         }
 
-        foundList.innerHTML = state.foundCountries
-            .map((country) =>
-                `<img src="${country.flagUrl}" alt="${country.name}" title="${country.name}" class="w-5 h-4 rounded-sm border border-white/10 object-cover" />`
-            )
-            .join('');
+        foundList.innerHTML = renderFoundFlagsBarTemplate(state.foundCountries);
     }
 
-    function renderEndScreen(): void {
-        root.innerHTML = `
-            <div class="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 gap-6">
-                <div class="text-center">
-                    <p class="text-sm uppercase tracking-[0.3em] text-green-400 mb-4">Félicitations !</p>
-                    <h1 class="text-4xl font-bold mb-2">Vous avez trouvé tous les drapeaux !</h1>
-                    <p class="text-base text-gray-300">Score final : ${state.score} / ${state.foundCountries.length}</p>
-                </div>
-                <div class="grid grid-cols-6 gap-2 w-full max-w-5xl">
-                    ${state.foundCountries
-                        .map((country) =>
-                            `<div class="flex flex-col items-center gap-1 p-2 bg-white/5 rounded-lg border border-white/10">
-                                <img src="${country.flagUrl}" alt="${country.name}" class="w-16 h-12 object-cover rounded-sm" />
-                                <span class="text-xs text-gray-200">${country.name}</span>
-                            </div>`
-                        )
-                        .join('')}
-                </div>
-            </div>
-        `;
+    function renderEndScreen(finalElapsedMicroseconds: number, completed: boolean, heading?: string): void {
+        gameEnded = true;
+
+        mountFlagQuizTemplate(root, 'end', {
+            badge: completed ? 'Félicitations !' : 'Score final',
+            heading: heading ?? (completed
+                ? 'Vous avez trouvé tous les drapeaux !'
+                : 'Partie terminée'),
+            scoreSummary: formatScoreWithTime(state.score, finalElapsedMicroseconds),
+            foundCountries: state.foundCountries,
+        });
+    }
+
+    function endGame(completed: boolean, heading?: string): void {
+        if (gameEnded) {
+            return;
+        }
+
+        const elapsed = stopTimer();
+        renderEndScreen(elapsed, completed, heading);
+    }
+
+    function handleCorrectAnswer(): void {
+        if (mode.freeEntry) {
+            const matched = findExactCountryMatch(input.value, getRemainingCountries(state));
+
+            if (!matched) {
+                return;
+            }
+
+            state = advanceQuizOnFreeEntry(state, matched, 4);
+        } else {
+            state = advanceQuizOnCorrect(state, 4);
+        }
+        updateScore();
+        updateRemaining();
+        renderFoundFlags();
+
+        if (mode.endOnComplete && isQuizComplete(state)) {
+            endGame(true);
+            return;
+        }
+
+        updateFeedback(
+            mode.freeEntry ? 'Exact ! Drapeau ajouté.' : 'Exact ! Nouvel indice...',
+            'arcade-feedback--success'
+        );
+        loadQuestion();
     }
 
     function refreshFeedback(): void {
-        if (!input.value.trim()) {
-            updateFeedback('', 'text-gray-600');
+        if (gameEnded || !input.value.trim()) {
+            if (!gameEnded && !input.value.trim()) {
+                updateFeedback('', 'arcade-feedback--neutral');
+            }
+            return;
+        }
+
+        if (mode.freeEntry) {
+            const result = getFreeEntryFeedback(state, input.value);
+
+            switch (result) {
+                case 'already-found':
+                    updateFeedback('Ce pays est déjà trouvé.', 'arcade-feedback--close');
+                    break;
+                case 'correct':
+                    handleCorrectAnswer();
+                    break;
+                case 'close':
+                    updateFeedback('Vous êtes proche !', 'arcade-feedback--close');
+                    break;
+                case 'wrong':
+                    updateFeedback('Ce pays n\'est pas dans la liste.', 'arcade-feedback--error');
+                    break;
+            }
+
             return;
         }
 
@@ -126,24 +225,13 @@ export async function initFlagQuiz(root: HTMLElement): Promise<void> {
 
         switch (result) {
             case 'correct':
-                state = advanceQuizOnCorrect(state, 4);
-                updateScore();
-                updateRemaining();
-                renderFoundFlags();
-
-                if (state.remainingCountries.length === 0) {
-                    renderEndScreen();
-                    return;
-                }
-
-                updateFeedback('Exact ! Nouvel indice...', 'text-green-600');
-                loadQuestion();
+                handleCorrectAnswer();
                 break;
             case 'close':
-                updateFeedback('Vous êtes proche !', 'text-yellow-600');
+                updateFeedback('Vous êtes proche !', 'arcade-feedback--close');
                 break;
             case 'wrong':
-                updateFeedback('Ce n’est pas la bonne réponse.', 'text-red-600');
+                updateFeedback('Ce n’est pas la bonne réponse.', 'arcade-feedback--error');
                 break;
         }
     }
@@ -155,7 +243,11 @@ export async function initFlagQuiz(root: HTMLElement): Promise<void> {
         refreshFeedback();
     });
 
+    skipButton?.addEventListener('click', skipFlag);
+    endGameButton?.addEventListener('click', () => endGame(false));
+
+    timer.start();
+    updateTimerDisplay();
     renderFoundFlags();
     updateRemaining();
 }
-

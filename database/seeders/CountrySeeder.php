@@ -84,11 +84,28 @@ class CountrySeeder extends Seeder
             'tv', 'ua', 'uy', 'vu', 'va', 've', 'vn', 'wf', 'ye', 'zm', 'zw'
         ];
 
+        $territoryCodes = [
+            'ai', 'aq', 'aw', 'bm', 'bv', 'cx', 'nf', 'ax', 'ky', 'cc', 'fo', 'hm', 'fk', 'mp',
+            'tc', 'vg', 'vi', 'hk', 'mo', 'gp', 'gf', 'mq', 'yt', 'nc', 'pf', 'pr', 'as', 'bl',
+            'sx', 'mf', 'pm', 're', 'tf', 'eh', 'tk', 'ta', 'sj', 'cw', 'gg', 'je', 'gi', 'gl',
+            'gu', 'ms', 'nu', 'wf', 'sh', 'um', 'pn', 'io', 'gs',
+        ];
+
+        /** @var list<string> $official159Codes */
+        $official159Codes = require database_path('data/official_159_iso_codes.php');
+
         for ($i = 0; $i < count($countries); $i++) {
-            Country::create([
-                'name' => $countries[$i],
-                'flag_url' => 'https://flagcdn.com/' . $codes[$i] . '.svg'
-            ]);
+            $isoCode = $codes[$i];
+
+            Country::updateOrCreate(
+                ['name' => $countries[$i]],
+                [
+                    'flag_url' => 'https://flagcdn.com/' . $isoCode . '.svg',
+                    'iso_code' => $isoCode,
+                    'is_sovereign' => ! in_array($isoCode, $territoryCodes, true),
+                    'is_official_country' => in_array($isoCode, $official159Codes, true),
+                ]
+            );
         }
     }
 }
