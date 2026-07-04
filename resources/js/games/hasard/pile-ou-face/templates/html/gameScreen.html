@@ -1,0 +1,56 @@
+<div class="arcade-screen min-h-screen flex flex-col items-center justify-center p-6 gap-6">
+    <header class="relative z-10 text-center">
+        <a href="/jeux/hasard" class="arcade-btn arcade-btn--skip mb-4 inline-flex">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        <p class="arcade-end-badge mb-2">Jeux de hasard</p>
+        <h1 class="arcade-end-title mb-1">Pile ou face</h1>
+        <p class="text-sm text-zinc-400">Choisissez pile ou face avant le lancer.</p>
+    </header>
+
+    <div class="relative z-10 flex flex-col items-center gap-6 w-full max-w-md">
+        <div class="arcade-coin-stage" aria-hidden="false">
+            <div class="arcade-coin-stage__glow"></div>
+            <div class="arcade-coin-shadow" id="coin-shadow"></div>
+            <div class="arcade-coin-launcher" id="coin-launcher">
+                <div class="arcade-coin" id="coin" aria-live="polite" aria-label="Pièce">
+                    <div class="arcade-coin__face arcade-coin__face--heads">
+                        <span class="arcade-coin__ring"></span>
+                        <span class="arcade-coin__symbol">P</span>
+                    </div>
+                    <div class="arcade-coin__face arcade-coin__face--tails">
+                        <span class="arcade-coin__ring"></span>
+                        <span class="arcade-coin__symbol">F</span>
+                    </div>
+                    <div class="arcade-coin__edge"></div>
+                </div>
+            </div>
+        </div>
+
+        <p class="arcade-coin-result" id="result" hidden></p>
+
+        <div class="flex gap-3 flex-wrap justify-center" id="choices">
+            <button type="button" class="arcade-btn arcade-btn--primary" data-choice="heads">
+                <i class="bi bi-circle-fill"></i> Pile
+            </button>
+            <button type="button" class="arcade-btn arcade-btn--primary" data-choice="tails">
+                <i class="bi bi-circle"></i> Face
+            </button>
+        </div>
+
+        <div class="arcade-stats-bar">
+            <div class="arcade-stats-bar__item">
+                <span class="arcade-stats-bar__label">Victoires</span>
+                <span class="arcade-stats-bar__value" id="wins">0</span>
+            </div>
+            <div class="arcade-stats-bar__item">
+                <span class="arcade-stats-bar__label">Défaites</span>
+                <span class="arcade-stats-bar__value" id="losses">0</span>
+            </div>
+            <div class="arcade-stats-bar__item">
+                <span class="arcade-stats-bar__label">Plus longue série</span>
+                <span class="arcade-stats-bar__value" id="best-streak">0</span>
+            </div>
+        </div>
+    </div>
+</div>

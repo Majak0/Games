@@ -5,6 +5,7 @@ export interface GameDefinition {
     href: string;
     icon: string;
     available: boolean;
+    isCategory?: boolean;
 }
 
 export const games: GameDefinition[] = [
@@ -25,11 +26,20 @@ export const games: GameDefinition[] = [
         available: true,
     },
     {
+        id: 'hasard',
+        title: 'Jeux de hasard',
+        description: 'Pile ou face, blackjack et autres jeux aléatoires.',
+        href: '/jeux/hasard',
+        icon: 'bi-dice-5-fill',
+        available: true,
+        isCategory: true,
+    },
+    {
         id: 'coming-soon',
         title: 'Prochain jeu',
         description: 'Une nouvelle salle ouvrira bientôt dans l\'arcade.',
         href: '#',
         icon: 'bi-controller',
         available: false,
-    },
+    }
 ];

@@ -10,6 +10,8 @@ export interface ModeCatalogEntry {
 export const GAME_LABELS: Record<string, string> = {
     'flag-quiz': 'Quiz drapeaux',
     'shape-quiz': 'Quiz pays',
+    'pile-ou-face': 'Pile ou face',
+    'blackjack': 'Blackjack',
 };
 
 export async function fetchModeCatalog(): Promise<ModeCatalogEntry[]> {

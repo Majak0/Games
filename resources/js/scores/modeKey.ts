@@ -1,4 +1,4 @@
-export type ScoreGame = 'flag-quiz' | 'shape-quiz';
+export type ScoreGame = 'flag-quiz' | 'shape-quiz' | 'pile-ou-face' | 'blackjack';
 
 export function buildFlagQuizScoreMode(pathname: string): string | null {
     const chronoMatch = pathname.match(/^\/jeux\/flag-quiz\/chrono\/(\d+)$/);

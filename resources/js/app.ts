@@ -12,6 +12,14 @@ import { initBlindSetup } from '@/games/flag-quiz/blindSetup';
 import { initChronoSetup } from '@/games/flag-quiz/chronoSetup';
 import { initFlagQuizSubmenu } from '@/games/flag-quiz/submenu';
 import { initHomeMenu } from '@/games/home/templates';
+import {
+    isBlackjackPath,
+    isHasardSubmenuPath,
+    isPileOuFacePath,
+} from '@/games/hasard/modes';
+import { initHasardSubmenu } from '@/games/hasard/submenu';
+import { initPileOuFace } from '@/games/hasard/pile-ou-face';
+import { initBlackjack } from '@/games/hasard/blackjack';
 import { initLoginPage } from '@/account/initLogin';
 import { initRegisterPage } from '@/account/initRegister';
 import { initProfilePage } from '@/account/initProfile';
@@ -87,6 +95,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (mode) {
         await initFlagQuiz(root, mode);
+        return;
+    }
+
+    if (isHasardSubmenuPath(pathname)) {
+        initHasardSubmenu(root);
+        return;
+    }
+
+    if (isPileOuFacePath(pathname)) {
+        initPileOuFace(root);
+        return;
+    }
+
+    if (isBlackjackPath(pathname)) {
+        initBlackjack(root);
         return;
     }
 

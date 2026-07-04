@@ -1088,3 +1088,442 @@ body.arcade-modal-open {
     border-color: rgb(57 255 20 / 70%);
     box-shadow: 0 0 14px rgb(57 255 20 / 25%);
 }
+
+.arcade-btn--primary {
+    color: #0d0118;
+    background: linear-gradient(135deg, var(--color-neon-green), #2dd40f);
+    border-color: rgb(57 255 20 / 70%);
+    box-shadow: 0 0 18px rgb(57 255 20 / 30%);
+}
+
+.arcade-btn--primary:hover:not(:disabled) {
+    box-shadow: 0 0 26px rgb(57 255 20 / 50%);
+}
+
+.arcade-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* —— Pile ou face —— */
+
+.arcade-coin-stage {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+    height: 17rem;
+    perspective: 1100px;
+    perspective-origin: 50% 40%;
+}
+
+.arcade-coin-stage__glow {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 50%;
+    width: 10rem;
+    height: 3rem;
+    transform: translateX(-50%);
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgb(255 230 0 / 22%), transparent 70%);
+    filter: blur(10px);
+    pointer-events: none;
+}
+
+.arcade-coin-shadow {
+    position: absolute;
+    bottom: 0.35rem;
+    left: 50%;
+    width: 6.5rem;
+    height: 1.1rem;
+    transform: translateX(-50%);
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgb(0 0 0 / 55%), transparent 72%);
+    filter: blur(4px);
+    pointer-events: none;
+}
+
+.arcade-coin-shadow--toss {
+    animation: arcade-coin-shadow-toss 1.6s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+}
+
+@keyframes arcade-coin-shadow-toss {
+    0% {
+        transform: translateX(-50%) scale(1);
+        opacity: 0.75;
+    }
+
+    38% {
+        transform: translateX(-50%) scale(0.35);
+        opacity: 0.2;
+    }
+
+    62% {
+        transform: translateX(-50%) scale(0.42);
+        opacity: 0.25;
+    }
+
+    78% {
+        transform: translateX(-50%) scale(1.08);
+        opacity: 0.85;
+    }
+
+    88% {
+        transform: translateX(-50%) scale(0.94);
+        opacity: 0.65;
+    }
+
+    100% {
+        transform: translateX(-50%) scale(1);
+        opacity: 0.75;
+    }
+}
+
+.arcade-coin-launcher {
+    position: relative;
+    z-index: 2;
+    transform-style: preserve-3d;
+    will-change: transform;
+}
+
+.arcade-coin-launcher--toss {
+    animation: arcade-coin-launch 1.6s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+}
+
+@keyframes arcade-coin-launch {
+    0% {
+        transform: translateY(0) scale(1);
+        animation-timing-function: cubic-bezier(0.15, 0.85, 0.25, 1);
+    }
+
+    36% {
+        transform: translateY(-13.5rem) scale(1.06);
+        animation-timing-function: cubic-bezier(0.55, 0.06, 0.85, 0.45);
+    }
+
+    58% {
+        transform: translateY(-1.5rem) scale(1.02);
+    }
+
+    74% {
+        transform: translateY(0.55rem) scale(0.94);
+        animation-timing-function: cubic-bezier(0.34, 1.4, 0.64, 1);
+    }
+
+    86% {
+        transform: translateY(-0.35rem) scale(1.02);
+    }
+
+    94% {
+        transform: translateY(0.12rem) scale(0.99);
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+
+.arcade-coin {
+    --coin-depth: 0.5rem;
+    --coin-rotation: 0deg;
+
+    position: relative;
+    width: 7.5rem;
+    height: 7.5rem;
+    transform-style: preserve-3d;
+    transform: rotateX(var(--coin-rotation));
+    will-change: transform;
+}
+
+.arcade-coin--spinning {
+    animation: arcade-coin-spin 1.6s cubic-bezier(0.33, 0.15, 0.2, 1) forwards;
+}
+
+@keyframes arcade-coin-spin {
+    0% {
+        transform: rotateX(var(--coin-spin-start, 0deg));
+    }
+
+    100% {
+        transform: rotateX(var(--coin-spin-end, 2160deg));
+    }
+}
+
+.arcade-coin__face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    border-radius: 9999px;
+    backface-visibility: hidden;
+    border: 3px solid rgb(255 215 0 / 85%);
+    box-shadow:
+        inset 0 0 18px rgb(255 255 255 / 25%),
+        inset 0 -6px 14px rgb(0 0 0 / 18%),
+        0 0 24px rgb(255 230 0 / 25%);
+}
+
+.arcade-coin__face--heads {
+    color: #1a1200;
+    background:
+        radial-gradient(circle at 32% 28%, rgb(255 255 255 / 55%), transparent 42%),
+        radial-gradient(circle at 70% 75%, rgb(0 0 0 / 12%), transparent 45%),
+        conic-gradient(from 210deg, #fff4a8, #ffd700, #c8960c, #ffe566, #fff4a8);
+    transform: rotateX(0deg) translateZ(calc(var(--coin-depth) / 2));
+}
+
+.arcade-coin__face--tails {
+    color: #e4e4e7;
+    background:
+        radial-gradient(circle at 32% 28%, rgb(255 255 255 / 35%), transparent 42%),
+        radial-gradient(circle at 70% 75%, rgb(0 0 0 / 22%), transparent 45%),
+        conic-gradient(from 200deg, #f4f4f5, #a1a1aa, #52525b, #d4d4d8, #f4f4f5);
+    border-color: rgb(212 212 216 / 85%);
+    box-shadow:
+        inset 0 0 18px rgb(255 255 255 / 15%),
+        inset 0 -6px 14px rgb(0 0 0 / 28%),
+        0 0 20px rgb(161 161 170 / 20%);
+    transform: rotateX(180deg) translateZ(calc(var(--coin-depth) / 2));
+}
+
+.arcade-coin__ring {
+    position: absolute;
+    inset: 0.65rem;
+    border-radius: 9999px;
+    border: 2px dashed rgb(0 0 0 / 18%);
+    pointer-events: none;
+}
+
+.arcade-coin__face--tails .arcade-coin__ring {
+    border-color: rgb(255 255 255 / 22%);
+}
+
+.arcade-coin__symbol {
+    position: relative;
+    z-index: 1;
+    font-size: 2.25rem;
+    font-weight: 800;
+    line-height: 1;
+    text-shadow: 0 1px 0 rgb(255 255 255 / 35%);
+}
+
+.arcade-coin__face--tails .arcade-coin__symbol {
+    text-shadow: 0 1px 0 rgb(0 0 0 / 35%);
+}
+
+.arcade-coin__label {
+    position: relative;
+    z-index: 1;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+
+.arcade-coin__edge {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    transform: translateZ(0);
+    background: repeating-conic-gradient(
+        from 0deg,
+        #b8860b 0deg 6deg,
+        #ffd700 6deg 12deg,
+        #c8960c 12deg 18deg,
+        #ffe566 18deg 24deg
+    );
+    mask: radial-gradient(circle, transparent calc(50% - 0.28rem), #000 calc(50% - 0.26rem));
+    -webkit-mask: radial-gradient(circle, transparent calc(50% - 0.28rem), #000 calc(50% - 0.26rem));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arcade-coin-launcher--toss,
+    .arcade-coin--spinning,
+    .arcade-coin-shadow--toss {
+        animation: none;
+    }
+}
+
+.arcade-coin-result {
+    min-height: 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.arcade-coin-result--win {
+    color: var(--color-neon-green);
+    text-shadow: 0 0 12px rgb(57 255 20 / 45%);
+}
+
+.arcade-coin-result--lose {
+    color: var(--color-neon-pink);
+    text-shadow: 0 0 12px rgb(255 0 128 / 45%);
+}
+
+.arcade-stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(191 0 255 / 35%);
+    background: rgb(13 1 24 / 80%);
+    box-shadow: 0 0 20px rgb(191 0 255 / 12%);
+}
+
+.arcade-stats-bar__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.arcade-stats-bar__label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgb(161 161 170);
+}
+
+.arcade-stats-bar__value {
+    font-family: ui-monospace, monospace;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-neon-green);
+}
+
+/* —— Blackjack —— */
+
+.arcade-blackjack-table {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    border-radius: 0.875rem;
+    border: 1px solid rgb(191 0 255 / 35%);
+    background:
+        radial-gradient(circle at 50% 0%, rgb(57 255 20 / 8%), transparent 55%),
+        rgb(13 1 24 / 85%);
+    box-shadow: 0 0 28px rgb(191 0 255 / 15%);
+}
+
+.arcade-blackjack-hand__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.arcade-blackjack-hand__title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: rgb(212 212 216);
+}
+
+.arcade-blackjack-tag {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--color-neon-yellow);
+    text-shadow:
+        0 0 10px rgb(255 230 0 / 65%),
+        0 0 20px rgb(255 230 0 / 35%);
+    animation: arcade-blackjack-tag-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes arcade-blackjack-tag-pulse {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.85;
+        transform: scale(1.04);
+    }
+}
+
+.arcade-blackjack-hand__score {
+    font-family: ui-monospace, monospace;
+    font-weight: 700;
+    color: var(--color-neon-green);
+}
+
+.arcade-blackjack-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 5.5rem;
+}
+
+.arcade-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 5rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgb(255 255 255 / 25%);
+    background: linear-gradient(160deg, #fafafa, #e4e4e7);
+    box-shadow: 0 6px 16px rgb(0 0 0 / 35%);
+}
+
+.arcade-card--red {
+    color: #dc2626;
+}
+
+.arcade-card--black {
+    color: #18181b;
+}
+
+.arcade-card--hidden {
+    background: linear-gradient(135deg, rgb(191 0 255 / 35%), rgb(57 255 20 / 20%));
+    border-color: rgb(191 0 255 / 45%);
+}
+
+.arcade-card__back {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-neon-purple);
+}
+
+.arcade-card__rank {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.arcade-card__suit {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.arcade-blackjack-message {
+    min-height: 1.5rem;
+    text-align: center;
+    font-weight: 600;
+    color: rgb(212 212 216);
+}
+
+.arcade-blackjack-message--win {
+    color: var(--color-neon-green);
+}
+
+.arcade-blackjack-message--lose {
+    color: var(--color-neon-pink);
+}
+

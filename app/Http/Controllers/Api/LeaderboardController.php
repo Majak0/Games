@@ -38,6 +38,7 @@ class LeaderboardController extends Controller
             'game' => $game,
             'mode' => $mode,
             'label' => $this->scores->modeLabel($game, $mode),
+            'total' => $this->scores->totalPlayers($game, $mode),
             'entries' => $entries,
         ]);
     }

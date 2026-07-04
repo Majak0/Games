@@ -27,4 +27,10 @@ return [
         'chrono:15' => ['label' => 'Contre-la-montre · 15 min', 'type' => 'chrono'],
         'aveugle' => ['label' => 'Saisie à l\'aveugle', 'type' => 'completion'],
     ],
+    'pile-ou-face' => [
+        'serie' => ['label' => 'Plus longue série', 'type' => 'streak'],
+    ],
+    'blackjack' => [
+        'serie' => ['label' => 'Plus longue série', 'type' => 'streak'],
+    ],
 ];

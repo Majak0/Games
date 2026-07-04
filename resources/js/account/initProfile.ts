@@ -27,7 +27,8 @@ function populateSelect(select: HTMLSelectElement, options: Array<{ value: strin
 
 function setupLeaderboardPicker(
     root: HTMLElement,
-    catalog: ModeCatalogEntry[]
+    catalog: ModeCatalogEntry[],
+    username: string
 ): void {
     const grouped = groupModesByGame(catalog);
     const gameSelect = root.querySelector('#leaderboard-game') as HTMLSelectElement;
@@ -67,7 +68,13 @@ function setupLeaderboardPicker(
         try {
             const data = await fetchLeaderboard(game, mode);
             title.textContent = data.label;
-            rows.innerHTML = renderLeaderboardRows(data.entries);
+
+            const userEntry = data.entries.find((entry) => entry.username === username);
+
+            rows.innerHTML = renderLeaderboardRows(
+                userEntry ? [userEntry] : [],
+                { includeUsername: false }
+            );
         } catch {
             title.textContent = 'Impossible de charger le classement.';
             rows.innerHTML = '';
@@ -103,19 +110,22 @@ export async function initProfilePage(root: HTMLElement): Promise<void> {
     const scoreRows = profile.scores
         .map((row) => fillTemplate(profileRowHtml, {
             label: row.label,
-            scoreDisplay: `${row.score}${row.completed ? ' ✓' : ''}`,
-            time: formatElapsedMicroseconds(row.elapsed_microseconds),
+            scoreDisplay: ['pile-ou-face', 'blackjack'].includes(row.game)
+                ? String(row.score)
+                : `${row.score}${row.completed ? ' ✓' : ''}`,
+            time: ['pile-ou-face', 'blackjack'].includes(row.game)
+                ? '—'
+                : formatElapsedMicroseconds(row.elapsed_microseconds),
             rank: String(row.rank),
         }))
         .join('');
 
     mountTemplate(root, fillTemplate(profileHtml, {
-        username: user.username,
         rows: scoreRows || '<tr><td colspan="4" class="text-center text-zinc-400 py-6">Aucun score enregistré pour l\'instant. Jouez une partie !</td></tr>',
         emptyState: '',
     }, ['rows', 'emptyState']));
 
-    setupLeaderboardPicker(root, catalog);
+    setupLeaderboardPicker(root, catalog, user.username);
 
     root.querySelector('#logout-button')?.addEventListener('click', async () => {
         await logout();

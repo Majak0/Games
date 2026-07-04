@@ -86,6 +86,10 @@ class GameScoreService
      */
     public function isBetter(array $incoming, GameScore $existing, string $type): bool
     {
+        if ($type === 'streak') {
+            return $incoming['score'] > $existing->score;
+        }
+
         if ($type === 'chrono') {
             if ($incoming['score'] !== $existing->score) {
                 return $incoming['score'] > $existing->score;
@@ -203,7 +207,7 @@ class GameScoreService
             ->where('game', $game)
             ->where('mode', $mode);
 
-        if ($type === 'chrono') {
+        if ($type === 'streak' || $type === 'chrono') {
             return $query
                 ->orderByDesc('score')
                 ->orderBy('elapsed_microseconds');
@@ -217,6 +221,12 @@ class GameScoreService
 
     private function applyBetterThan(Builder $query, GameScore $reference, string $type): void
     {
+        if ($type === 'streak') {
+            $query->where('score', '>', $reference->score);
+
+            return;
+        }
+
         if ($type === 'chrono') {
             $query->where(function (Builder $inner) use ($reference) {
                 $inner->where('score', '>', $reference->score)

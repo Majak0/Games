@@ -16,7 +16,7 @@ class GameScoreController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'game' => ['required', 'string', 'in:flag-quiz,shape-quiz'],
+            'game' => ['required', 'string', 'in:flag-quiz,shape-quiz,pile-ou-face,blackjack'],
             'mode' => ['required', 'string', 'max:64'],
             'score' => ['required', 'integer', 'min:0'],
             'elapsed_microseconds' => ['required', 'integer', 'min:0'],

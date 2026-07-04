@@ -1,0 +1,65 @@
+<div class="arcade-screen min-h-screen flex flex-col p-6 gap-4">
+    <header class="relative z-10 text-center">
+        <a href="/jeux/hasard" class="arcade-btn arcade-btn--skip mb-4 inline-flex">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        <p class="arcade-end-badge mb-2">Jeux de hasard</p>
+        <h1 class="arcade-end-title mb-1">Blackjack</h1>
+        <p class="text-sm text-zinc-400">Approchez 21 sans dépasser.</p>
+    </header>
+
+    <div class="relative z-10 flex flex-col gap-5 w-full max-w-3xl mx-auto flex-1">
+        <div class="arcade-stats-bar">
+            <div class="arcade-stats-bar__item">
+                <span class="arcade-stats-bar__label">Victoires</span>
+                <span class="arcade-stats-bar__value" id="wins">0</span>
+            </div>
+            <div class="arcade-stats-bar__item">
+                <span class="arcade-stats-bar__label">Défaites</span>
+                <span class="arcade-stats-bar__value" id="losses">0</span>
+            </div>
+            <div class="arcade-stats-bar__item">
+                <span class="arcade-stats-bar__label">Plus longue série</span>
+                <span class="arcade-stats-bar__value" id="best-streak">0</span>
+            </div>
+        </div>
+
+        <section class="arcade-blackjack-table">
+            <div class="arcade-blackjack-hand">
+                <div class="arcade-blackjack-hand__header">
+                    <h2 class="arcade-blackjack-hand__title">
+                        Croupier
+                        <span class="arcade-blackjack-tag" id="dealer-blackjack-tag" hidden>BLACKJACK !!</span>
+                    </h2>
+                    <span class="arcade-blackjack-hand__score" id="dealer-score">—</span>
+                </div>
+                <div class="arcade-blackjack-cards" id="dealer-cards"></div>
+            </div>
+
+            <div class="arcade-blackjack-hand">
+                <div class="arcade-blackjack-hand__header">
+                    <h2 class="arcade-blackjack-hand__title">
+                        Vous
+                        <span class="arcade-blackjack-tag" id="player-blackjack-tag" hidden>BLACKJACK !!</span>
+                    </h2>
+                    <span class="arcade-blackjack-hand__score" id="player-score">—</span>
+                </div>
+                <div class="arcade-blackjack-cards" id="player-cards"></div>
+            </div>
+        </section>
+
+        <p class="arcade-blackjack-message" id="message" aria-live="polite"></p>
+
+        <div class="flex gap-3 flex-wrap justify-center" id="actions">
+            <button type="button" class="arcade-btn arcade-btn--primary" id="btn-hit">
+                <i class="bi bi-plus-lg"></i> Tirer
+            </button>
+            <button type="button" class="arcade-btn arcade-btn--skip" id="btn-stand">
+                <i class="bi bi-hand-index-thumb"></i> Rester
+            </button>
+            <button type="button" class="arcade-btn arcade-btn--danger" id="btn-new">
+                <i class="bi bi-arrow-repeat"></i> Nouvelle partie
+            </button>
+        </div>
+    </div>
+</div>

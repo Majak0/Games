@@ -56,6 +56,18 @@ Route::get('/jeux/shape-quiz/{mode}', function () {
     return view('home');
 })->where('mode', 'pays|chrono|aveugle|carte');
 
+Route::get('/jeux/hasard', function () {
+    return view('home');
+});
+
+Route::get('/jeux/hasard/pile-ou-face', function () {
+    return view('home');
+});
+
+Route::get('/jeux/hasard/blackjack', function () {
+    return view('home');
+});
+
 Route::prefix('api')->group(function () {
     Route::get('/assets/flags/{iso}', [CountryAssetController::class, 'flag'])
         ->where('iso', '[a-z0-9-]+');

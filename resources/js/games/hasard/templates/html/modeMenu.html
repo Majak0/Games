@@ -1,0 +1,13 @@
+<div class="arcade-screen min-h-screen flex flex-col items-center justify-center p-6 gap-8">
+    <header class="relative z-10 text-center">
+        <a href="/" class="arcade-btn arcade-btn--skip mb-6 inline-flex">
+            <i class="bi bi-arrow-left"></i> Retour au menu
+        </a>
+        <p class="arcade-end-badge mb-3">Jeux de hasard</p>
+        <h1 class="arcade-end-title mb-2">Choisissez un jeu</h1>
+        <p class="text-sm text-zinc-400">Deux salles de jeu aléatoires vous attendent.</p>
+    </header>
+    <div class="relative z-10 grid gap-4 w-full max-w-2xl">
+        {{games}}
+    </div>
+</div>

@@ -6,7 +6,7 @@ import menuHtml from './html/menu.html?raw';
 import gameCardHtml from './html/gameCard.html?raw';
 
 function renderLeaderboardButton(game: (typeof games)[number]): string {
-    if (!game.available || game.id === 'coming-soon') {
+    if (!game.available || game.isCategory) {
         return '';
     }
 
@@ -29,7 +29,7 @@ function renderGameCard(game: (typeof games)[number]): string {
         icon: game.icon,
         title: game.title,
         description: game.description,
-        badge: game.available ? 'Jouer' : 'Bientôt',
+        badge: game.isCategory ? 'Entrer' : game.available ? 'Jouer' : 'Bientôt',
         leaderboardButton: renderLeaderboardButton(game),
     }, ['leaderboardButton']);
 }
