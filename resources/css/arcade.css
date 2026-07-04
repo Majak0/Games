@@ -1003,6 +1003,34 @@ body.arcade-modal-open {
     margin-left: 0.35rem;
 }
 
+.arcade-score-save--guest {
+    margin-top: 1.25rem;
+    padding: 1rem 1.25rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(191 0 255 / 35%);
+    background: rgb(13 1 24 / 85%);
+    text-align: center;
+}
+
+.arcade-score-save__message {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: rgb(212 212 216);
+}
+
+.arcade-score-save__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.arcade-score-save__actions a {
+    margin-left: 0;
+}
+
 #account-fab {
     position: fixed;
     top: 1rem;

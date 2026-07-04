@@ -19,12 +19,12 @@ return [
         'aveugle:pays' => ['label' => 'Aveugle · 197 pays', 'type' => 'completion'],
     ],
     'shape-quiz' => [
+        'carte' => ['label' => 'Complète la map', 'type' => 'completion'],
         'pays' => ['label' => '197 pays', 'type' => 'completion'],
         'chrono:3' => ['label' => 'Contre-la-montre · 3 min', 'type' => 'chrono'],
         'chrono:5' => ['label' => 'Contre-la-montre · 5 min', 'type' => 'chrono'],
         'chrono:10' => ['label' => 'Contre-la-montre · 10 min', 'type' => 'chrono'],
         'chrono:15' => ['label' => 'Contre-la-montre · 15 min', 'type' => 'chrono'],
         'aveugle' => ['label' => 'Saisie à l\'aveugle', 'type' => 'completion'],
-        'carte' => ['label' => 'Complète la map', 'type' => 'completion'],
     ],
 ];

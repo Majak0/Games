@@ -46,7 +46,16 @@ export function formatScoreRankMessage(result: SubmitScoreResult): string {
 }
 
 export function formatGuestScoreMessage(): string {
-    return 'Connectez-vous pour enregistrer votre score et apparaître au classement.';
+    return 'Créez un compte ou connectez-vous pour sauvegarder automatiquement votre score et apparaître au classement.';
+}
+
+export function renderGuestScoreSavePanel(): string {
+    return `
+        <p class="arcade-score-save__message">${formatGuestScoreMessage()}</p>
+        <div class="arcade-score-save__actions">
+            <a href="/compte/inscription" class="arcade-btn">Créer un compte</a>
+            <a href="/compte/connexion" class="arcade-btn arcade-btn--skip">Se connecter</a>
+        </div>`;
 }
 
 function ordinalSuffix(rank: number): string {

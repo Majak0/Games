@@ -1,7 +1,7 @@
 import { getScoreContextFromPath } from '@/scores/modeKey';
 import {
-    formatGuestScoreMessage,
     formatScoreRankMessage,
+    renderGuestScoreSavePanel,
     submitScore,
 } from '@/scores/submitScore';
 
@@ -11,7 +11,7 @@ export async function attachScoreSaveStatus(
     elapsedMicroseconds: number,
     completed: boolean
 ): Promise<void> {
-    const status = root.querySelector('#score-save-status') as HTMLParagraphElement | null;
+    const status = root.querySelector('#score-save-status') as HTMLElement | null;
 
     if (!status) {
         return;
@@ -36,8 +36,8 @@ export async function attachScoreSaveStatus(
         });
 
         if (!result) {
-            status.innerHTML = `${formatGuestScoreMessage()} <a href="/compte/connexion" class="text-neon-green hover:underline">Se connecter</a>`;
-            status.className = 'arcade-score-save text-sm text-zinc-300';
+            status.innerHTML = renderGuestScoreSavePanel();
+            status.className = 'arcade-score-save arcade-score-save--guest';
 
             return;
         }
@@ -51,4 +51,4 @@ export async function attachScoreSaveStatus(
 }
 
 export const scoreSaveSectionHtml = `
-        <p id="score-save-status" class="arcade-score-save text-sm text-zinc-400 mt-4">Enregistrement du score…</p>`;
+        <div id="score-save-status" class="arcade-score-save text-sm text-zinc-400 mt-4">Enregistrement du score…</div>`;

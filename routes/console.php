@@ -131,3 +131,29 @@ Artisan::command('scores:prune {--keep=100 : Nombre de scores conservés par mod
     return 0;
 })->purpose('Supprime les scores au-delà du top N pour chaque mode');
 
+Artisan::command('countries:import-assets {--force : Réimporter même si déjà présent} {--flags : Drapeaux uniquement} {--shapes : Formes uniquement} {--insecure : Ignorer les erreurs SSL (Windows/dev)}', function () {
+    $service = app(\App\Services\CountryAssetService::class)->allowInsecureDownloads(
+        (bool) $this->option('insecure') || app()->environment('local')
+    );
+    $force = (bool) $this->option('force');
+    $flagsOnly = (bool) $this->option('flags');
+    $shapesOnly = (bool) $this->option('shapes');
+
+    if (! $flagsOnly && ! $shapesOnly) {
+        $flagsOnly = true;
+        $shapesOnly = true;
+    }
+
+    if ($flagsOnly) {
+        $count = $service->importFlags($force);
+        $this->info("Drapeaux importés : {$count}");
+    }
+
+    if ($shapesOnly) {
+        $count = $service->importShapes($force);
+        $this->info("Formes importées : {$count}");
+    }
+
+    return 0;
+})->purpose('Importe les SVG drapeaux et formes en base de données');
+

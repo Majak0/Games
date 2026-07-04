@@ -16,6 +16,17 @@ export interface ShapeQuizMode {
 
 export const shapeQuizModes: ShapeQuizMode[] = [
     {
+        id: 'carte',
+        title: 'Complète la map',
+        description: 'Coloriez la carte en trouvant les 197 pays du monde.',
+        href: '/jeux/shape-quiz/carte',
+        icon: 'bi-globe-americas',
+        pool: 'world',
+        mapMode: true,
+        freeEntry: true,
+        endOnComplete: true,
+    },
+    {
         id: 'pays',
         title: '197 pays',
         description: 'Retrouvez les 197 formes de pays. Terminez quand vous voulez.',
@@ -41,17 +52,6 @@ export const shapeQuizModes: ShapeQuizMode[] = [
         icon: 'bi-eye-slash-fill',
         pool: 'sovereign',
         hideVisual: true,
-        freeEntry: true,
-        endOnComplete: true,
-    },
-    {
-        id: 'carte',
-        title: 'Complète la map',
-        description: 'Coloriez la carte en trouvant les 197 pays du monde.',
-        href: '/jeux/shape-quiz/carte',
-        icon: 'bi-globe-americas',
-        pool: 'world',
-        mapMode: true,
         freeEntry: true,
         endOnComplete: true,
     },

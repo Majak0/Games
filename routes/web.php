@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CountryAssetController;
 use App\Http\Controllers\Api\GameScoreController;
 use App\Http\Controllers\Api\LeaderboardController;
 use App\Models\Country;
@@ -56,6 +57,11 @@ Route::get('/jeux/shape-quiz/{mode}', function () {
 })->where('mode', 'pays|chrono|aveugle|carte');
 
 Route::prefix('api')->group(function () {
+    Route::get('/assets/flags/{iso}', [CountryAssetController::class, 'flag'])
+        ->where('iso', '[a-z0-9-]+');
+    Route::get('/assets/shapes/{iso}', [CountryAssetController::class, 'shape'])
+        ->where('iso', '[a-z0-9-]+');
+
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
@@ -96,11 +102,8 @@ Route::get('/api/countries', function (Request $request) {
         $query->whereIn('iso_code', $worldQuizCodes);
     }
 
-    /** @var array<string, list<string>> $synonymsByIso */
-    $synonymsByIso = require database_path('data/country_synonyms.php');
-
     return response()->json(
-        $query->orderBy('name')->get()->map(function (Country $country) use ($synonymsByIso) {
+        $query->with('synonyms')->orderBy('name')->get()->map(function (Country $country) {
             $iso = strtolower($country->iso_code ?? '');
 
             return [
@@ -109,7 +112,7 @@ Route::get('/api/countries', function (Request $request) {
                 'flag_url' => $country->flag_url,
                 'iso_code' => $country->iso_code,
                 'shape_url' => $country->shape_url,
-                'synonyms' => $synonymsByIso[$iso] ?? [],
+                'synonyms' => $country->synonyms->pluck('synonym')->all(),
             ];
         })
     );

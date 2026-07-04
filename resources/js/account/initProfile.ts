@@ -106,7 +106,6 @@ export async function initProfilePage(root: HTMLElement): Promise<void> {
             scoreDisplay: `${row.score}${row.completed ? ' ✓' : ''}`,
             time: formatElapsedMicroseconds(row.elapsed_microseconds),
             rank: String(row.rank),
-            total: String(row.total),
         }))
         .join('');
 
