@@ -19,13 +19,14 @@ TypeScript sera ajouté progressivement pour la logique des jeux côté client.
 
 ## Jeux déployés
 
-Aucun pour le moment — le site est en cours de mise en place.
+**Trouve le drapeau** - **Trouve le pays** - **Jeux de hasard**
 
-## Jeux en développement
+## En développement
 
 | Jeu | Description | Statut |
 |-----|-------------|--------|
-| **Trouve le drapeau** | Un drapeau s'affiche, le joueur doit trouver le pays correspondant. Premier jeu du projet. | En cours |
+| **Morpion** | Jeu du morpion / Tic-tac-toe. Possibilité future de faire un salon multijoueur. | En cours |
+| **Succès** | Quelques petits succès liés au profil utilisateur. | En cours |
 
 ## Installation (local)
 
