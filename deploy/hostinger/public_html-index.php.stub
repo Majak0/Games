@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * Fallback si Hostinger ne permet pas de changer la racine web vers /public.
+ *
+ * 1. Uploadez tout le projet Laravel dans un dossier SANS accès web, ex. :
+ *    /home/u123456789/domains/votre-domaine.com/laravel/
+ * 2. Copiez ce fichier vers public_html/index.php
+ * 3. Copiez aussi public/.htaccess vers public_html/.htaccess
+ * 4. Adaptez LARAVEL_PUBLIC ci-dessous si votre chemin diffère.
+ */
+
+define('LARAVEL_PUBLIC', __DIR__.'/../laravel/public');
+
+require LARAVEL_PUBLIC.'/index.php';
