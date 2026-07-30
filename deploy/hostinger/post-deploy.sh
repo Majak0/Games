@@ -20,10 +20,17 @@ echo "==> Vérification PHP"
 $PHP_BIN -v
 
 echo "==> Dépendances Composer (production)"
-if command -v composer >/dev/null 2>&1; then
-  composer install --no-dev --optimize-autoloader --no-interaction
+if [[ -d vendor && -f vendor/autoload.php ]]; then
+  echo "vendor/ déjà présent — composer ignoré (proc_open souvent désactivé sur mutualisé)."
+elif command -v composer >/dev/null 2>&1; then
+  # --no-scripts : évite artisan package:discover qui requiert proc_open sur Hostinger
+  composer install --no-dev --optimize-autoloader --no-interaction --no-scripts || {
+    echo "Composer a échoué. Uploadez vendor/ depuis deploy-prepare.sh en local." >&2
+    exit 1
+  }
 else
-  echo "Composer absent sur le serveur : utilisez vendor/ depuis votre build local."
+  echo "Erreur : vendor/ absent et composer indisponible. Lancez scripts/deploy-prepare.sh en local." >&2
+  exit 1
 fi
 
 echo "==> Migrations"
