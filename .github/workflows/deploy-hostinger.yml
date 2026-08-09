@@ -45,7 +45,8 @@ jobs:
 
       - name: Create deployment archive
         run: |
-          tar -C . -czf /tmp/deploy.tar.gz \
+          mkdir -p deploy/output
+          tar -C . -czf deploy/output/deploy.tar.gz \
             --exclude='.git' \
             --exclude='.github' \
             --exclude='.env' \
@@ -77,7 +78,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: /tmp/deploy.tar.gz
+          source: deploy/output/deploy.tar.gz
           target: /tmp/
 
       - name: Extract and post-deploy
