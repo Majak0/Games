@@ -214,10 +214,24 @@ cat ~/.ssh/hostinger_games_deploy.pub
 
 | Secret | Valeur |
 |--------|--------|
-| `SSH_HOST` | IP ou hostname hPanel (ex. `72.60.93.178`) |
+| `SSH_HOST` | `72.60.93.178` |
 | `SSH_PORT` | `65002` |
 | `SSH_USER` | `u663389318` |
-| `SSH_PRIVATE_KEY` | Contenu de `~/.ssh/hostinger_games_deploy` (clé privée entière) |
+| `SSH_PRIVATE_KEY` | Contenu **entier** de la clé privée (voir ci-dessous) |
+
+**Format de `SSH_PRIVATE_KEY`** — copiez la clé telle quelle, avec les lignes :
+
+```
+-----BEGIN OPENSSH PRIVATE KEY-----
+...
+-----END OPENSSH PRIVATE KEY-----
+```
+
+Test local avant le push :
+
+```bash
+ssh -i ~/.ssh/hostinger_games_deploy -p 65002 u663389318@72.60.93.178 "echo OK"
+```
 
 4. Vérifiez que `DEPLOY_PATH` dans `.github/workflows/deploy-hostinger.yml` correspond à votre chemin serveur.
 

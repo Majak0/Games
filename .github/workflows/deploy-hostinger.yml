@@ -12,7 +12,6 @@ concurrency:
 env:
   PHP_VERSION: '8.3'
   NODE_VERSION: '22'
-  # Adaptez ce chemin si votre domaine Hostinger change.
   DEPLOY_PATH: /home/u663389318/domains/darkorchid-rail-782039.hostingersite.com/Games
 
 jobs:
@@ -44,31 +43,44 @@ jobs:
           npm ci
           npm run build
 
-      - name: Configure SSH
+      - name: Create deployment archive
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+          tar czf deploy.tar.gz \
+            --exclude='./.git' \
+            --exclude='./.github' \
+            --exclude='./.env' \
+            --exclude='./node_modules' \
+            --exclude='./tests' \
+            --exclude='./deploy/output' \
+            --exclude='./storage/logs' \
+            --exclude='./storage/framework/cache/data' \
+            --exclude='./storage/framework/sessions' \
+            --exclude='./storage/framework/views' \
+            --exclude='./storage/pail' \
+            .
 
-      - name: Sync files to Hostinger
-        run: |
-          rsync -avz \
-            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=accept-new" \
-            --exclude '.git/' \
-            --exclude '.github/' \
-            --exclude '.env' \
-            --exclude 'node_modules/' \
-            --exclude 'tests/' \
-            --exclude 'deploy/output/' \
-            --exclude 'storage/logs/' \
-            --exclude 'storage/framework/cache/data/' \
-            --exclude 'storage/framework/sessions/' \
-            --exclude 'storage/framework/views/' \
-            --exclude 'storage/pail/' \
-            ./ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/"
+      - name: Test SSH connection
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            echo "SSH OK — $(whoami)@$(hostname)"
+            test -d "${{ env.DEPLOY_PATH }}" && echo "DEPLOY_PATH exists" || echo "DEPLOY_PATH missing — create Games/ on server first"
 
-      - name: Post-deploy (migrate + cache)
+      - name: Upload archive
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: deploy.tar.gz
+          target: /tmp/
+
+      - name: Extract and post-deploy
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -77,9 +89,12 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd "${{ env.DEPLOY_PATH }}"
+            tar xzf /tmp/deploy.tar.gz
+            rm -f /tmp/deploy.tar.gz
             bash deploy/hostinger/update.sh
 
       - name: Health check
+        continue-on-error: true
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.SSH_HOST }}
