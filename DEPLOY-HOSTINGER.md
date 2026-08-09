@@ -214,7 +214,7 @@ cat ~/.ssh/hostinger_games_deploy.pub
 
 | Secret | Valeur |
 |--------|--------|
-| `SSH_HOST` | Hôte SSH hPanel (ex. `ssh.hostinger.com`) |
+| `SSH_HOST` | IP ou hostname hPanel (ex. `72.60.93.178`) |
 | `SSH_PORT` | `65002` |
 | `SSH_USER` | `u663389318` |
 | `SSH_PRIVATE_KEY` | Contenu de `~/.ssh/hostinger_games_deploy` (clé privée entière) |
