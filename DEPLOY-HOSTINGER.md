@@ -188,15 +188,51 @@ Vérifiez que `public/build/manifest.json` existe (build Vite fait en local avan
 
 ## Mises à jour ultérieures
 
+### Option A — Automatique (GitHub Actions, recommandé)
+
+À chaque `git push` sur `main`, le workflow `.github/workflows/deploy-hostinger.yml` :
+
+1. compile le projet (`composer` + `npm run build`)
+2. envoie les fichiers sur Hostinger via SSH/rsync
+3. lance `migrate` + cache production
+
+**Configuration initiale (une seule fois) :**
+
+1. Générez une clé SSH dédiée au déploiement (sur votre PC) :
+
+```bash
+ssh-keygen -t ed25519 -C "github-deploy-games" -f ~/.ssh/hostinger_games_deploy -N ""
+```
+
+2. Ajoutez la clé **publique** dans hPanel → **Accès SSH** → **SSH keys** :
+
+```bash
+cat ~/.ssh/hostinger_games_deploy.pub
+```
+
+3. Dans GitHub → repo **Games** → **Settings** → **Secrets and variables** → **Actions**, ajoutez :
+
+| Secret | Valeur |
+|--------|--------|
+| `SSH_HOST` | Hôte SSH hPanel (ex. `ssh.hostinger.com`) |
+| `SSH_PORT` | `65002` |
+| `SSH_USER` | `u663389318` |
+| `SSH_PRIVATE_KEY` | Contenu de `~/.ssh/hostinger_games_deploy` (clé privée entière) |
+
+4. Vérifiez que `DEPLOY_PATH` dans `.github/workflows/deploy-hostinger.yml` correspond à votre chemin serveur.
+
+5. Poussez sur `main` — le déploiement démarre dans l’onglet **Actions** de GitHub.
+
+> Le fichier `.env` du serveur n’est **jamais** écrasé par le workflow.
+
+### Option B — Manuelle (archive)
+
 1. En local : `bash scripts/deploy-prepare.sh`
 2. Uploadez les fichiers modifiés (ou le nouveau ZIP)
 3. SSH :
 
 ```bash
-php artisan migrate --force
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+bash deploy/hostinger/update.sh
 ```
 
 ---
@@ -205,7 +241,9 @@ php artisan view:cache
 
 | Fichier | Rôle |
 |---------|------|
+| `.github/workflows/deploy-hostinger.yml` | Déploiement auto à chaque push sur `main` |
 | `.env.hostinger.example` | Modèle `.env` production |
-| `scripts/deploy-prepare.sh` | Build + ZIP de déploiement |
-| `deploy/hostinger/post-deploy.sh` | Commandes à lancer sur le serveur |
+| `scripts/deploy-prepare.sh` | Build + ZIP de déploiement manuel |
+| `deploy/hostinger/post-deploy.sh` | Premier déploiement (migrate + seed + cache) |
+| `deploy/hostinger/update.sh` | Mises à jour (migrate + cache, sans composer) |
 | `deploy/hostinger/public_html-index.php.stub` | Fallback si racine web fixe |
