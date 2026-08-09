@@ -1,3 +1,5 @@
+import { isGamePath, pathSegments } from '@/shared/path';
+
 export type FlagQuizModeId = 'tous' | 'chrono' | 'pays' | 'aveugle';
 
 export type CountryPool = 'all' | 'sovereign';
@@ -96,70 +98,115 @@ export function getFlagQuizMode(modeId: string | null | undefined): FlagQuizMode
     return flagQuizModes.find((mode) => mode.id === modeId) ?? null;
 }
 
-export function isFlagQuizSubmenuPath(pathname: string): boolean {
-    return pathname === '/jeux/flag-quiz' || pathname === '/jeux/flag-quiz/';
-}
-
-export function isChronoSetupPath(pathname: string): boolean {
-    return pathname === '/jeux/flag-quiz/chrono' || pathname === '/jeux/flag-quiz/chrono/';
-}
-
-export function isBlindSetupPath(pathname: string): boolean {
-    return pathname === '/jeux/flag-quiz/aveugle' || pathname === '/jeux/flag-quiz/aveugle/';
-}
-
-export function getFlagQuizModeFromPath(pathname: string): FlagQuizMode | null {
-    const chronoMatch = pathname.match(/^\/jeux\/flag-quiz\/chrono\/(\d+)$/);
-
-    if (chronoMatch) {
-        const minutes = Number(chronoMatch[1]);
-
-        if (!chronoDurationMinutes.includes(minutes)) {
-            return null;
-        }
-
-        const mode = getFlagQuizMode('chrono');
-
-        if (!mode) {
-            return null;
-        }
-
-        return {
-            ...mode,
-            timeLimitMs: minutes * 60 * 1000,
-            title: `Contre-la-montre · ${minutes} min`,
-        };
-    }
-
-    const blindMatch = pathname.match(/^\/jeux\/flag-quiz\/aveugle\/(tous|pays)$/);
-
-    if (blindMatch) {
-        const poolOption = blindPoolOptions.find((option) => option.id === blindMatch[1]);
-
-        if (!poolOption) {
-            return null;
-        }
-
-        const mode = getFlagQuizMode('aveugle');
-
-        if (!mode) {
-            return null;
-        }
-
-        return {
-            ...mode,
-            pool: poolOption.pool,
-            hideVisual: true,
-            freeEntry: true,
-            title: `Saisie à l'aveugle · ${poolOption.label}`,
-        };
-    }
-
-    const match = pathname.match(/^\/jeux\/flag-quiz\/(tous|pays)$/);
-
-    if (!match) {
+function buildFlagChronoMode(minutes: number): FlagQuizMode | null {
+    if (!Number.isInteger(minutes) || !chronoDurationMinutes.includes(minutes)) {
         return null;
     }
 
-    return getFlagQuizMode(match[1]);
+    const mode = getFlagQuizMode('chrono');
+
+    if (!mode) {
+        return null;
+    }
+
+    return {
+        ...mode,
+        timeLimitMs: minutes * 60 * 1000,
+        title: `Contre-la-montre · ${minutes} min`,
+    };
+}
+
+function buildFlagBlindMode(poolId: string): FlagQuizMode | null {
+    const poolOption = blindPoolOptions.find((option) => option.id === poolId);
+
+    if (!poolOption) {
+        return null;
+    }
+
+    const mode = getFlagQuizMode('aveugle');
+
+    if (!mode) {
+        return null;
+    }
+
+    return {
+        ...mode,
+        pool: poolOption.pool,
+        hideVisual: true,
+        freeEntry: true,
+        title: `Saisie à l'aveugle · ${poolOption.label}`,
+    };
+}
+
+export function getFlagQuizScoreKeyFromPath(pathname: string): string | null {
+    const parts = pathSegments(pathname);
+
+    if (!isGamePath(pathname, 'flag-quiz')) {
+        return null;
+    }
+
+    switch (parts.length) {
+        case 3:
+            switch (parts[2]) {
+                case 'tous':
+                case 'pays':
+                    return parts[2];
+                default:
+                    return null;
+            }
+        case 4:
+            switch (parts[2]) {
+                case 'chrono': {
+                    const minutes = Number(parts[3]);
+
+                    if (!Number.isInteger(minutes) || !chronoDurationMinutes.includes(minutes)) {
+                        return null;
+                    }
+
+                    return `chrono:${minutes}`;
+                }
+                case 'aveugle':
+                    switch (parts[3]) {
+                        case 'tous':
+                        case 'pays':
+                            return `aveugle:${parts[3]}`;
+                        default:
+                            return null;
+                    }
+                default:
+                    return null;
+            }
+        default:
+            return null;
+    }
+}
+
+export function getFlagQuizModeFromPath(pathname: string): FlagQuizMode | null {
+    const parts = pathSegments(pathname);
+
+    if (!isGamePath(pathname, 'flag-quiz')) {
+        return null;
+    }
+
+    switch (parts.length) {
+        case 3:
+            switch (parts[2]) {
+                case 'tous':
+                case 'pays':
+                    return getFlagQuizMode(parts[2]);
+                default:
+                    return null;
+            }
+        case 4:
+            switch (parts[2]) {
+                case 'chrono':
+                    return buildFlagChronoMode(Number(parts[3]));
+                case 'aveugle':
+                    return buildFlagBlindMode(parts[3]);
+                default:
+                    return null;
+            }
+        default:
+            return null;
+    }
 }

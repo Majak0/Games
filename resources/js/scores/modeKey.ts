@@ -1,33 +1,14 @@
+import { getFlagQuizScoreKeyFromPath } from '@/games/flag-quiz/modes';
+import { getShapeQuizScoreKeyFromPath } from '@/games/shape-quiz/modes';
+
 export type ScoreGame = 'flag-quiz' | 'shape-quiz' | 'pile-ou-face' | 'blackjack';
 
 export function buildFlagQuizScoreMode(pathname: string): string | null {
-    const chronoMatch = pathname.match(/^\/jeux\/flag-quiz\/chrono\/(\d+)$/);
-
-    if (chronoMatch) {
-        return `chrono:${chronoMatch[1]}`;
-    }
-
-    const blindMatch = pathname.match(/^\/jeux\/flag-quiz\/aveugle\/(tous|pays)$/);
-
-    if (blindMatch) {
-        return `aveugle:${blindMatch[1]}`;
-    }
-
-    const match = pathname.match(/^\/jeux\/flag-quiz\/(tous|pays)$/);
-
-    return match ? match[1] : null;
+    return getFlagQuizScoreKeyFromPath(pathname);
 }
 
 export function buildShapeQuizScoreMode(pathname: string): string | null {
-    const chronoMatch = pathname.match(/^\/jeux\/shape-quiz\/chrono\/(\d+)$/);
-
-    if (chronoMatch) {
-        return `chrono:${chronoMatch[1]}`;
-    }
-
-    const match = pathname.match(/^\/jeux\/shape-quiz\/(pays|aveugle|carte)$/);
-
-    return match ? match[1] : null;
+    return getShapeQuizScoreKeyFromPath(pathname);
 }
 
 export function getScoreContextFromPath(pathname: string): { game: ScoreGame; mode: string } | null {

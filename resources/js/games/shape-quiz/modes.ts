@@ -1,3 +1,5 @@
+import { isGamePath, pathSegments } from '@/shared/path';
+
 export type ShapeQuizModeId = 'pays' | 'chrono' | 'aveugle' | 'carte';
 
 export interface ShapeQuizMode {
@@ -70,42 +72,85 @@ export function getShapeQuizMode(modeId: string | null | undefined): ShapeQuizMo
     return shapeQuizModes.find((mode) => mode.id === modeId) ?? null;
 }
 
-export function isShapeQuizSubmenuPath(pathname: string): boolean {
-    return pathname === '/jeux/shape-quiz' || pathname === '/jeux/shape-quiz/';
-}
-
-export function isShapeChronoSetupPath(pathname: string): boolean {
-    return pathname === '/jeux/shape-quiz/chrono' || pathname === '/jeux/shape-quiz/chrono/';
-}
-
-export function getShapeQuizModeFromPath(pathname: string): ShapeQuizMode | null {
-    const chronoMatch = pathname.match(/^\/jeux\/shape-quiz\/chrono\/(\d+)$/);
-
-    if (chronoMatch) {
-        const minutes = Number(chronoMatch[1]);
-
-        if (!(chronoDurationMinutes as readonly number[]).includes(minutes)) {
-            return null;
-        }
-
-        const mode = getShapeQuizMode('chrono');
-
-        if (!mode) {
-            return null;
-        }
-
-        return {
-            ...mode,
-            timeLimitMs: minutes * 60 * 1000,
-            title: `Contre-la-montre · ${minutes} min`,
-        };
-    }
-
-    const match = pathname.match(/^\/jeux\/shape-quiz\/(pays|aveugle|carte)$/);
-
-    if (!match) {
+function buildShapeChronoMode(minutes: number): ShapeQuizMode | null {
+    if (!Number.isInteger(minutes) || !(chronoDurationMinutes as readonly number[]).includes(minutes)) {
         return null;
     }
 
-    return getShapeQuizMode(match[1]);
+    const mode = getShapeQuizMode('chrono');
+
+    if (!mode) {
+        return null;
+    }
+
+    return {
+        ...mode,
+        timeLimitMs: minutes * 60 * 1000,
+        title: `Contre-la-montre · ${minutes} min`,
+    };
+}
+
+export function getShapeQuizScoreKeyFromPath(pathname: string): string | null {
+    const parts = pathSegments(pathname);
+
+    if (!isGamePath(pathname, 'shape-quiz')) {
+        return null;
+    }
+
+    switch (parts.length) {
+        case 3:
+            switch (parts[2]) {
+                case 'pays':
+                case 'aveugle':
+                case 'carte':
+                    return parts[2];
+                default:
+                    return null;
+            }
+        case 4:
+            switch (parts[2]) {
+                case 'chrono': {
+                    const minutes = Number(parts[3]);
+
+                    if (!Number.isInteger(minutes) || !(chronoDurationMinutes as readonly number[]).includes(minutes)) {
+                        return null;
+                    }
+
+                    return `chrono:${minutes}`;
+                }
+                default:
+                    return null;
+            }
+        default:
+            return null;
+    }
+}
+
+export function getShapeQuizModeFromPath(pathname: string): ShapeQuizMode | null {
+    const parts = pathSegments(pathname);
+
+    if (!isGamePath(pathname, 'shape-quiz')) {
+        return null;
+    }
+
+    switch (parts.length) {
+        case 3:
+            switch (parts[2]) {
+                case 'pays':
+                case 'aveugle':
+                case 'carte':
+                    return getShapeQuizMode(parts[2]);
+                default:
+                    return null;
+            }
+        case 4:
+            switch (parts[2]) {
+                case 'chrono':
+                    return buildShapeChronoMode(Number(parts[3]));
+                default:
+                    return null;
+            }
+        default:
+            return null;
+    }
 }

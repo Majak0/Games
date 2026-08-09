@@ -8,71 +8,13 @@ use App\Models\Country;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('home');
-});
+$spa = fn () => view('home');
 
-Route::get('/compte', function () {
-    return view('home');
-});
-
-Route::get('/compte/connexion', function () {
-    return view('home');
-});
-
-Route::get('/compte/inscription', function () {
-    return view('home');
-});
-
-Route::get('/classement/{game}/{mode}', function () {
-    return view('home');
-})->where('game', 'flag-quiz|shape-quiz')->where('mode', '[a-z0-9:]+');
-
-Route::get('/jeux/flag-quiz', function () {
-    return view('home');
-});
-
-Route::get('/jeux/flag-quiz/chrono/{minutes}', function () {
-    return view('home');
-})->where('minutes', '3|5|10|15');
-
-Route::get('/jeux/flag-quiz/aveugle/{pool}', function () {
-    return view('home');
-})->where('pool', 'tous|pays');
-
-Route::get('/jeux/flag-quiz/{mode}', function () {
-    return view('home');
-})->where('mode', 'tous|chrono|pays|aveugle');
-
-Route::get('/jeux/shape-quiz', function () {
-    return view('home');
-});
-
-Route::get('/jeux/shape-quiz/chrono/{minutes}', function () {
-    return view('home');
-})->where('minutes', '3|5|10|15');
-
-Route::get('/jeux/shape-quiz/{mode}', function () {
-    return view('home');
-})->where('mode', 'pays|chrono|aveugle|carte');
-
-Route::get('/jeux/hasard', function () {
-    return view('home');
-});
-
-Route::get('/jeux/hasard/pile-ou-face', function () {
-    return view('home');
-});
-
-Route::get('/jeux/hasard/blackjack', function () {
-    return view('home');
-});
+Route::get('/', $spa);
 
 Route::prefix('api')->group(function () {
-    Route::get('/assets/flags/{iso}', [CountryAssetController::class, 'flag'])
-        ->where('iso', '[a-z0-9-]+');
-    Route::get('/assets/shapes/{iso}', [CountryAssetController::class, 'shape'])
-        ->where('iso', '[a-z0-9-]+');
+    Route::get('/assets/flags/{iso}', [CountryAssetController::class, 'flag']);
+    Route::get('/assets/shapes/{iso}', [CountryAssetController::class, 'shape']);
 
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/register', [AuthController::class, 'register']);
@@ -115,17 +57,16 @@ Route::get('/api/countries', function (Request $request) {
     }
 
     return response()->json(
-        $query->with('synonyms')->orderBy('name')->get()->map(function (Country $country) {
-            $iso = strtolower($country->iso_code ?? '');
-
-            return [
-                'id' => $country->id,
-                'name' => $country->name,
-                'flag_url' => $country->flag_url,
-                'iso_code' => $country->iso_code,
-                'shape_url' => $country->shape_url,
-                'synonyms' => $country->synonyms->pluck('synonym')->all(),
-            ];
-        })
+        $query->with('synonyms')->orderBy('name')->get()->map(fn (Country $country) => [
+            'id' => $country->id,
+            'name' => $country->name,
+            'flag_url' => $country->flag_url,
+            'iso_code' => $country->iso_code,
+            'shape_url' => $country->shape_url,
+            'synonyms' => $country->synonyms->pluck('synonym')->all(),
+        ])
     );
 });
+
+// Toutes les pages frontend partagent la même vue (routage côté client).
+Route::fallback($spa);
