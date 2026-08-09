@@ -45,18 +45,18 @@ jobs:
 
       - name: Create deployment archive
         run: |
-          tar czf deploy.tar.gz \
-            --exclude='./.git' \
-            --exclude='./.github' \
-            --exclude='./.env' \
-            --exclude='./node_modules' \
-            --exclude='./tests' \
-            --exclude='./deploy/output' \
-            --exclude='./storage/logs' \
-            --exclude='./storage/framework/cache/data' \
-            --exclude='./storage/framework/sessions' \
-            --exclude='./storage/framework/views' \
-            --exclude='./storage/pail' \
+          tar -C . -czf /tmp/deploy.tar.gz \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.env' \
+            --exclude='node_modules' \
+            --exclude='tests' \
+            --exclude='deploy/output' \
+            --exclude='storage/logs' \
+            --exclude='storage/framework/cache/data' \
+            --exclude='storage/framework/sessions' \
+            --exclude='storage/framework/views' \
+            --exclude='storage/pail' \
             .
 
       - name: Test SSH connection
@@ -77,7 +77,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: deploy.tar.gz
+          source: /tmp/deploy.tar.gz
           target: /tmp/
 
       - name: Extract and post-deploy
