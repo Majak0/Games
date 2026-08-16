@@ -1038,6 +1038,56 @@ body.arcade-modal-open {
     z-index: 100;
 }
 
+body:has(.arcade-hud-bar) #account-fab {
+    top: 3.75rem;
+}
+
+#contact-fab {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 100;
+}
+
+body:has(#contact-form) #contact-fab {
+    display: none;
+}
+
+.arcade-contact-form .arcade-input,
+.arcade-contact-form .arcade-select {
+    width: 100%;
+    max-width: none;
+}
+
+.arcade-input--area {
+    min-height: 12rem;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.arcade-contact-copy .arcade-contact-copy__on {
+    display: none;
+}
+
+.arcade-contact-copy:has(input:checked) {
+    color: #0d0118;
+    background: linear-gradient(135deg, var(--color-neon-green), #2dd40f);
+    border-color: rgb(57 255 20 / 70%);
+    box-shadow: 0 0 18px rgb(57 255 20 / 30%);
+}
+
+.arcade-contact-copy:has(input:checked):hover {
+    box-shadow: 0 0 26px rgb(57 255 20 / 50%);
+}
+
+.arcade-contact-copy:has(input:checked) .arcade-contact-copy__off {
+    display: none;
+}
+
+.arcade-contact-copy:has(input:checked) .arcade-contact-copy__on {
+    display: inline-block;
+}
+
 .arcade-account-fab {
     display: inline-flex;
     align-items: center;

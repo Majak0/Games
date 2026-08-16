@@ -1,0 +1,54 @@
+<div class="arcade-screen min-h-screen flex flex-col items-center justify-center p-6 gap-6">
+    <div class="relative z-10 w-full max-w-xl arcade-panel">
+        <p class="arcade-end-badge mb-3">Contact</p>
+        <h1 class="arcade-end-title mb-2 text-center">Écrire un message</h1>
+        <p class="mb-4 text-center text-sm text-zinc-400">
+            Le message sera envoyé à contact@arcadiahub.fr
+        </p>
+        <form id="contact-form" class="arcade-contact-form flex flex-col gap-4">
+            <label class="flex flex-col gap-1 text-sm">
+                <span>Objet</span>
+                <select id="contact-subject" class="arcade-select" required>
+                    <option value="" disabled selected>Choisir un objet</option>
+                    <option value="question">Question</option>
+                    <option value="bug">Signalement de bug</option>
+                    <option value="suggestion">Suggestion</option>
+                    <option value="compte">Compte / connexion</option>
+                    <option value="autre">Autre</option>
+                </select>
+            </label>
+            <label id="contact-subject-custom-wrap" class="flex flex-col gap-1 text-sm hidden">
+                <span>Précisez l'objet</span>
+                <input id="contact-subject-custom" type="text" class="arcade-input" maxlength="120" placeholder="Objet du message">
+            </label>
+            <label class="flex flex-col gap-1 text-sm">
+                <span>Votre e-mail</span>
+                <input id="contact-email" type="email" class="arcade-input" autocomplete="email" placeholder="vous@exemple.fr">
+            </label>
+            <label class="arcade-btn arcade-btn--danger arcade-contact-copy inline-flex w-fit cursor-pointer">
+                <input id="contact-copy" type="checkbox" class="sr-only">
+                <i class="bi bi-circle arcade-contact-copy__off" aria-hidden="true"></i>
+                <i class="bi bi-record-circle-fill arcade-contact-copy__on" aria-hidden="true"></i>
+                <span>M'ajouter en copie (Cc)</span>
+            </label>
+            <label class="flex flex-col gap-1 text-sm">
+                <span>Message</span>
+                <textarea id="contact-message" class="arcade-input arcade-input--area" required minlength="10" maxlength="5000" placeholder="Rédigez votre message…"></textarea>
+            </label>
+            <div class="flex flex-col gap-2 text-sm">
+                <span>Pièces jointes (optionnel)</span>
+                <label class="arcade-btn arcade-btn--skip inline-flex w-fit cursor-pointer">
+                    <i class="bi bi-paperclip"></i> Ajouter des fichiers
+                    <input id="contact-attachments" type="file" class="sr-only" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.txt,.csv,.zip,.doc,.docx,image/*,application/pdf">
+                </label>
+                <p id="contact-file-list" class="text-xs text-zinc-400">Aucun fichier. Jusqu'à 3 fichiers, 4 Mo chacun (images, PDF, texte, ZIP, Word).</p>
+            </div>
+            <p id="contact-error" class="text-sm font-bold arcade-feedback--error hidden"></p>
+            <p id="contact-success" class="text-sm font-bold arcade-feedback--success hidden"></p>
+            <div class="flex flex-wrap justify-center gap-3">
+                <a href="/" class="arcade-btn arcade-btn--danger inline-flex"><i class="bi bi-arrow-left"></i> Accueil</a>
+                <button id="contact-submit" type="submit" class="arcade-btn arcade-btn--primary">Envoyer</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,5 +1,6 @@
 import { mountApp } from '@/router';
 import { initAccountFab } from '@/shared/accountFab';
+import { initContactFab } from '@/shared/contactFab';
 
 document.addEventListener('DOMContentLoaded', async () => {
     await initAccountFab();
@@ -9,4 +10,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (root) {
         await mountApp(root);
     }
+
+    initContactFab();
 });

@@ -13,5 +13,10 @@
     <body class="min-h-screen bg-arcade-bg text-zinc-100 antialiased">
         <div id="account-fab"></div>
         @yield('content')
+        <div id="contact-fab">
+            <a href="/contact" class="arcade-account-fab" title="Nous contacter" aria-label="Nous contacter">
+                <i class="bi bi-envelope-fill" aria-hidden="true"></i>
+            </a>
+        </div>
     </body>
 </html>

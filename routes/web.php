@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\CountryAssetController;
 use App\Http\Controllers\Api\GameScoreController;
 use App\Http\Controllers\Api\LeaderboardController;
@@ -20,6 +21,7 @@ Route::prefix('api')->group(function () {
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth');
+    Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:5,10');
 
     Route::get('/leaderboards/catalog', [LeaderboardController::class, 'catalog']);
     Route::get('/leaderboards/{game}/{mode}', [LeaderboardController::class, 'show']);

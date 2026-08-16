@@ -2,6 +2,7 @@ import { initLeaderboardPage } from '@/account/initLeaderboard';
 import { initLoginPage } from '@/account/initLogin';
 import { initProfilePage } from '@/account/initProfile';
 import { initRegisterPage } from '@/account/initRegister';
+import { initContactPage } from '@/contact/initContact';
 import { initBlindSetup } from '@/games/flag-quiz/blindSetup';
 import { initChronoSetup } from '@/games/flag-quiz/chronoSetup';
 import { getFlagQuizModeFromPath } from '@/games/flag-quiz/modes';
@@ -29,6 +30,9 @@ export async function mountApp(root: HTMLElement): Promise<void> {
             return;
         case '/compte':
             await initProfilePage(root);
+            return;
+        case '/contact':
+            initContactPage(root);
             return;
         case '/jeux/flag-quiz':
             await initFlagQuizSubmenu(root);

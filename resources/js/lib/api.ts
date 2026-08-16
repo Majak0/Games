@@ -17,7 +17,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
         headers.set('Accept', 'application/json');
     }
 
-    if (options.body && !headers.has('Content-Type')) {
+    if (options.body && !headers.has('Content-Type') && !(options.body instanceof FormData)) {
         headers.set('Content-Type', 'application/json');
     }
 

@@ -115,4 +115,8 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    'contact' => [
+        'address' => env('MAIL_CONTACT_ADDRESS', 'contact@arcadiahub.fr'),
+    ],
+
 ];
