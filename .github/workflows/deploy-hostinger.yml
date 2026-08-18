@@ -12,7 +12,7 @@ concurrency:
 env:
   PHP_VERSION: '8.3'
   NODE_VERSION: '22'
-  DEPLOY_PATH: /home/u663389318/domains/darkorchid-rail-782039.hostingersite.com/Games
+  DEPLOY_PATH: /home/u663389318/domains/arcadiahub.fr/Games
 
 jobs:
   deploy:
@@ -103,4 +103,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            curl -sf -o /dev/null -w "HTTP %{http_code}\n" "https://darkorchid-rail-782039.hostingersite.com/up"
+            curl -sf -o /dev/null -w "HTTP %{http_code}\n" "https://arcadiahub.fr/up"
