@@ -278,6 +278,29 @@
     transform: translateY(-1px);
 }
 
+.arcade-btn--ghost {
+    color: rgb(161 161 170);
+    background: rgb(255 255 255 / 4%);
+    border-color: rgb(191 0 255 / 30%);
+}
+
+.arcade-btn--ghost:hover {
+    color: #fafafa;
+    border-color: rgb(191 0 255 / 55%);
+}
+
+.arcade-btn--active {
+    color: var(--color-neon-green);
+    background: rgb(57 255 20 / 14%);
+    border-color: rgb(57 255 20 / 55%);
+    box-shadow: 0 0 18px rgb(57 255 20 / 25%);
+}
+
+.arcade-duration-picker .arcade-btn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+}
+
 .arcade-btn--skip {
     color: var(--color-neon-green);
     background: rgb(57 255 20 / 8%);
@@ -997,6 +1020,10 @@ body.arcade-modal-open {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--color-neon-green);
+}
+
+.arcade-score-table--streak .arcade-score-table__time {
+    display: none;
 }
 
 .arcade-score-save a {

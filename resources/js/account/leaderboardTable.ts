@@ -6,6 +6,7 @@ import leaderboardRowProfileHtml from './templates/html/leaderboardRowProfile.ht
 
 export interface LeaderboardRenderOptions {
     includeUsername?: boolean;
+    hideTime?: boolean;
     total?: number;
 }
 
@@ -32,8 +33,9 @@ export function renderLeaderboardRows(
     options: LeaderboardRenderOptions = {}
 ): string {
     const includeUsername = options.includeUsername ?? true;
+    const hideTime = options.hideTime ?? false;
     const rowTemplate = includeUsername ? leaderboardRowHtml : leaderboardRowProfileHtml;
-    const columnCount = 4;
+    const columnCount = includeUsername ? 4 : 3;
 
     if (entries.length === 0) {
         return `<tr><td colspan="${columnCount}" class="text-center text-zinc-400 py-6">Aucun score pour ce mode.</td></tr>`;
@@ -44,8 +46,10 @@ export function renderLeaderboardRows(
             rank: String(entry.rank),
             rankDisplay: `${entry.rank}`,
             username: entry.username,
-            scoreDisplay: `${entry.score}${entry.completed ? ' ✓' : ''}`,
-            time: formatElapsedMicroseconds(entry.elapsed_microseconds),
+            scoreDisplay: hideTime
+                ? String(entry.score)
+                : `${entry.score}${entry.completed ? ' ✓' : ''}`,
+            time: hideTime ? '—' : formatElapsedMicroseconds(entry.elapsed_microseconds),
         }))
         .join('');
 }
