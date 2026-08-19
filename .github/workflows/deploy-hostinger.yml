@@ -72,7 +72,14 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             echo "SSH OK — $(whoami)@$(hostname)"
-            test -f "${{ env.DEPLOY_PATH }}/artisan" && echo "DEPLOY_PATH OK (artisan found)" || echo "DEPLOY_PATH missing — Laravel root not found on server"
+            BASE="${{ env.DEPLOY_PATH }}"
+            if [ -f "$BASE/artisan" ]; then
+              echo "Laravel root: $BASE"
+            elif [ -f "$BASE/Games/artisan" ]; then
+              echo "Laravel root: $BASE/Games"
+            else
+              echo "ATTENTION : artisan introuvable dans $BASE ni $BASE/Games"
+            fi
 
       - name: Upload archive
         uses: appleboy/scp-action@v0.1.7
@@ -83,6 +90,8 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           source: deploy/output/deploy.tar.gz
           target: /tmp/
+          # Sans strip_components, le fichier arrive dans /tmp/deploy/output/
+          strip_components: 2
 
       - name: Extract and post-deploy
         uses: appleboy/ssh-action@v1.2.2
@@ -92,9 +101,32 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            cd "${{ env.DEPLOY_PATH }}"
-            tar xzf /tmp/deploy.tar.gz
-            rm -f /tmp/deploy.tar.gz
+            set -euo pipefail
+
+            ARCHIVE="/tmp/deploy.tar.gz"
+            if [ ! -f "$ARCHIVE" ]; then
+              ARCHIVE="/tmp/deploy/output/deploy.tar.gz"
+            fi
+            if [ ! -f "$ARCHIVE" ]; then
+              echo "Archive introuvable. Contenu de /tmp :" >&2
+              ls -laR /tmp/deploy* 2>/dev/null || ls -la /tmp/*.tar.gz 2>/dev/null || true
+              exit 1
+            fi
+
+            BASE="${{ env.DEPLOY_PATH }}"
+            if [ -f "$BASE/artisan" ]; then
+              DEPLOY_PATH="$BASE"
+            elif [ -f "$BASE/Games/artisan" ]; then
+              DEPLOY_PATH="$BASE/Games"
+            else
+              echo "artisan introuvable dans $BASE ni $BASE/Games" >&2
+              exit 1
+            fi
+
+            echo "Déploiement dans $DEPLOY_PATH (archive: $ARCHIVE)"
+            cd "$DEPLOY_PATH"
+            tar xzf "$ARCHIVE"
+            rm -f "$ARCHIVE" /tmp/deploy/output/deploy.tar.gz 2>/dev/null || true
             bash deploy/hostinger/update.sh
 
       - name: Health check
@@ -112,7 +144,13 @@ jobs:
               exit 1
             }
             MANIFEST_HASH="$(grep -o 'app-[A-Za-z0-9_-]*\.js' <<< "$HTML" | head -1)"
-            DISK_HASH="$(grep -o 'app-[A-Za-z0-9_-]*\.js' "${{ env.DEPLOY_PATH }}/public/build/manifest.json" | head -1)"
+            BASE="${{ env.DEPLOY_PATH }}"
+            if [ -f "$BASE/artisan" ]; then
+              DEPLOY_PATH="$BASE"
+            else
+              DEPLOY_PATH="$BASE/Games"
+            fi
+            DISK_HASH="$(grep -o 'app-[A-Za-z0-9_-]*\.js' "$DEPLOY_PATH/public/build/manifest.json" | head -1)"
             echo "Site: $MANIFEST_HASH — déployé: $DISK_HASH"
             test "$MANIFEST_HASH" = "$DISK_HASH" || {
               echo "ERREUR : les assets servis ne correspondent pas au build déployé." >&2
