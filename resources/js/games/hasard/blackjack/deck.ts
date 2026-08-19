@@ -55,8 +55,22 @@ export function handValue(cards: Card[]): number {
     return total;
 }
 
+const TEN_VALUE_RANKS: Rank[] = ['10', 'J', 'Q', 'K'];
+
 export function isBlackjack(cards: Card[]): boolean {
-    return cards.length === 2 && handValue(cards) === 21;
+    if (cards.length !== 2) {
+        return false;
+    }
+
+    const ranks = cards.map((card) => card.rank);
+    const hasAce = ranks.includes('A');
+    const hasTenValue = ranks.some((rank) => TEN_VALUE_RANKS.includes(rank));
+
+    return hasAce && hasTenValue;
+}
+
+export function isMaximumTwentyOne(cards: Card[]): boolean {
+    return cards.length > 0 && handValue(cards) === 21 && !isBlackjack(cards);
 }
 
 export function suitSymbol(suit: Suit): string {

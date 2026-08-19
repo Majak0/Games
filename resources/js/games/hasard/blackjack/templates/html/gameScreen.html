@@ -5,7 +5,18 @@
         </a>
         <p class="arcade-end-badge mb-2">Jeux de hasard</p>
         <h1 class="arcade-end-title mb-1">Blackjack</h1>
-        <p class="text-sm text-zinc-400">Approchez 21 sans dépasser.</p>
+        <p class="arcade-blackjack-subtitle text-sm text-zinc-400">
+            <span>Approchez 21 sans dépasser.</span>
+            <button
+                type="button"
+                class="arcade-help-bubble"
+                id="btn-help"
+                aria-label="Afficher les règles du blackjack"
+                aria-haspopup="dialog"
+            >
+                <i class="bi bi-question-lg" aria-hidden="true"></i>
+            </button>
+        </p>
     </header>
 
     <div class="relative z-10 flex flex-col gap-5 w-full max-w-3xl mx-auto flex-1">
@@ -30,6 +41,7 @@
                     <h2 class="arcade-blackjack-hand__title">
                         Croupier
                         <span class="arcade-blackjack-tag" id="dealer-blackjack-tag" hidden>BLACKJACK !!</span>
+                        <span class="arcade-blackjack-tag arcade-blackjack-tag--max" id="dealer-max-tag" hidden>Maximum atteint !</span>
                     </h2>
                     <span class="arcade-blackjack-hand__score" id="dealer-score">—</span>
                 </div>
@@ -41,6 +53,7 @@
                     <h2 class="arcade-blackjack-hand__title">
                         Vous
                         <span class="arcade-blackjack-tag" id="player-blackjack-tag" hidden>BLACKJACK !!</span>
+                        <span class="arcade-blackjack-tag arcade-blackjack-tag--max" id="player-max-tag" hidden>Maximum atteint !</span>
                     </h2>
                     <span class="arcade-blackjack-hand__score" id="player-score">—</span>
                 </div>
@@ -50,16 +63,181 @@
 
         <p class="arcade-blackjack-message" id="message" aria-live="polite"></p>
 
-        <div class="flex gap-3 flex-wrap justify-center" id="actions">
-            <button type="button" class="arcade-btn arcade-btn--primary" id="btn-hit">
-                <i class="bi bi-plus-lg"></i> Tirer
-            </button>
-            <button type="button" class="arcade-btn arcade-btn--skip" id="btn-stand">
-                <i class="bi bi-hand-index-thumb"></i> Rester
-            </button>
-            <button type="button" class="arcade-btn arcade-btn--danger" id="btn-new">
-                <i class="bi bi-arrow-repeat"></i> Nouvelle partie
-            </button>
+        <div class="arcade-blackjack-actions" id="actions">
+            <div class="arcade-blackjack-actions__play">
+                <button type="button" class="arcade-btn arcade-btn--primary" id="btn-hit">
+                    <i class="bi bi-plus-lg"></i> Tirer
+                </button>
+                <button type="button" class="arcade-btn arcade-btn--skip" id="btn-stand">
+                    <i class="bi bi-hand-index-thumb"></i> Rester
+                </button>
+                <button type="button" class="arcade-btn arcade-btn--danger" id="btn-new">
+                    <i class="bi bi-arrow-repeat"></i> Nouvelle partie
+                </button>
+            </div>
+
+            <div class="arcade-blackjack-actions__bankroll">
+                <div class="arcade-blackjack-bankroll">
+                    <span class="arcade-blackjack-bankroll__label">Solde</span>
+                    <span class="arcade-blackjack-bankroll__value" id="bankroll">50 $</span>
+                </div>
+                <div class="arcade-blackjack-bet">
+                    <label class="arcade-blackjack-bet__label" for="bet-amount">Mise</label>
+                    <div class="arcade-blackjack-bet__controls">
+                        <div class="arcade-blackjack-bet__field">
+                            <input
+                                type="text"
+                                id="bet-amount"
+                                class="arcade-blackjack-bet__input"
+                                value="5"
+                                inputmode="numeric"
+                                autocomplete="off"
+                                spellcheck="false"
+                            />
+                            <span class="arcade-blackjack-bet__suffix">$</span>
+                        </div>
+                        <div class="arcade-blackjack-bet__stepper">
+                            <button
+                                type="button"
+                                class="arcade-blackjack-bet__step"
+                                id="btn-bet-up"
+                                aria-label="Augmenter la mise"
+                            >
+                                <i class="bi bi-chevron-up" aria-hidden="true"></i>
+                            </button>
+                            <button
+                                type="button"
+                                class="arcade-blackjack-bet__step"
+                                id="btn-bet-down"
+                                aria-label="Diminuer la mise"
+                            >
+                                <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="arcade-modal" id="blackjack-help-modal" hidden aria-hidden="true">
+        <div class="arcade-modal__backdrop" data-close-help-modal></div>
+        <div
+            class="arcade-modal__panel arcade-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="blackjack-help-title"
+        >
+            <header class="arcade-modal__header">
+                <div>
+                    <p class="arcade-end-badge mb-1">Blackjack</p>
+                    <h2 id="blackjack-help-title" class="arcade-modal__title">Règles du jeu</h2>
+                </div>
+                <button type="button" class="arcade-modal__close" data-close-help-modal aria-label="Fermer">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="arcade-modal__body arcade-blackjack-rules">
+                <section>
+                    <h3>Objectif</h3>
+                    <p>
+                        Approchez un total de 21 sans le dépasser et battez le croupier.
+                        Si vous dépassez 21, vous perdez immédiatement.
+                    </p>
+                </section>
+
+                <section>
+                    <h3>Valeur des cartes</h3>
+                    <ul>
+                        <li>Les cartes de 2 à 10 valent leur valeur faciale.</li>
+                        <li>Le Valet, la Dame et le Roi valent 10.</li>
+                        <li>L'As vaut 11 ou 1, selon ce qui vous avantage le plus.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Blackjack</h3>
+                    <p>
+                        Un blackjack est un As accompagné d'une carte valant 10 (10, Valet, Dame ou Roi)
+                        reçus dès les deux premières cartes. Il bat un simple 21 obtenu avec plus de cartes
+                        et est payé 1,5× votre mise.
+                    </p>
+                </section>
+
+                <section>
+                    <h3>Déroulement d'une manche</h3>
+                    <ul>
+                        <li>Le joueur et le croupier reçoivent chacun deux cartes.</li>
+                        <li>La deuxième carte du croupier reste cachée pendant votre tour.</li>
+                        <li><strong>Tirer</strong> : ajoute une carte à votre main.</li>
+                        <li><strong>Rester</strong> : termine votre tour et lance celui du croupier.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Tour du croupier</h3>
+                    <p>
+                        Le croupier révèle sa carte cachée, puis tire des cartes a son tour.
+                        S'il dépasse 21, vous gagnez et si il y a égalité vous récupérez votre mise.
+                    </p>
+                </section>
+
+                <section>
+                    <h3>Résultats</h3>
+                    <ul>
+                        <li>Vous gagnez si le croupier dépasse 21 ou si votre total est supérieur au sien.</li>
+                        <li>Vous perdez si vous dépassez 21 ou si le total du croupier est supérieur au vôtre.</li>
+                        <li>Égalité si les totaux sont identiques.</li>
+                        <li>Un blackjack immédiat du joueur fait gagner la manche.</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3>Jetons</h3>
+                    <ul>
+                        <li>Vous démarrez avec 50 $ de jetons fictifs (50 $ offerts à l'inscription).</li>
+                        <li>Connecté, votre solde est sauvegardé et vous pouvez miser jusqu'à la totalité de vos jetons.</li>
+                        <li>Choisissez votre mise avant chaque nouvelle partie, dans la limite de votre solde.</li>
+                        <li>La mise est retirée au début de la manche.</li>
+                        <li>Victoire normale : paiement 1:1 (gain égal à la mise).</li>
+                        <li>Blackjack : paiement 3:2 (1,5× la mise en gain).</li>
+                        <li>Égalité : votre mise vous est rendue.</li>
+                        <li>Sans jetons, les joueurs connectés peuvent récupérer 10 $ gratuits le lendemain.</li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div class="arcade-modal" id="blackjack-daily-modal" hidden aria-hidden="true">
+        <div class="arcade-modal__backdrop" data-close-daily-modal></div>
+        <div
+            class="arcade-modal__panel arcade-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="blackjack-daily-title"
+        >
+            <header class="arcade-modal__header">
+                <div>
+                    <p class="arcade-end-badge mb-1">Blackjack</p>
+                    <h2 id="blackjack-daily-title" class="arcade-modal__title">Plus de jetons</h2>
+                </div>
+                <button type="button" class="arcade-modal__close" data-close-daily-modal aria-label="Fermer">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="arcade-modal__body">
+                <p id="blackjack-daily-message" class="text-sm text-zinc-300 leading-relaxed"></p>
+                <div class="mt-5 flex flex-wrap gap-3 justify-end">
+                    <button type="button" class="arcade-btn arcade-btn--skip" data-close-daily-modal>
+                        Fermer
+                    </button>
+                    <button type="button" class="arcade-btn arcade-btn--primary" id="btn-claim-daily" hidden>
+                        Récupérer 10 $
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -1452,6 +1452,67 @@ body:has(#contact-form) #contact-fab {
 
 /* —— Blackjack —— */
 
+.arcade-blackjack-subtitle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.arcade-help-bubble {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    border: 1px solid rgb(255 230 0 / 45%);
+    background: rgb(255 230 0 / 12%);
+    color: var(--color-neon-yellow);
+    font-size: 0.75rem;
+    line-height: 1;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease,
+        transform 0.15s ease;
+}
+
+.arcade-help-bubble:hover {
+    border-color: rgb(255 230 0 / 75%);
+    background: rgb(255 230 0 / 22%);
+    transform: scale(1.06);
+}
+
+.arcade-modal__body {
+    overflow-y: auto;
+    max-height: min(60vh, 480px);
+    padding-right: 0.25rem;
+}
+
+.arcade-blackjack-rules {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: rgb(212 212 216);
+    line-height: 1.55;
+}
+
+.arcade-blackjack-rules h3 {
+    margin-bottom: 0.35rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fafafa;
+}
+
+.arcade-blackjack-rules ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding-left: 1.1rem;
+    list-style: disc;
+}
+
 .arcade-blackjack-table {
     display: flex;
     flex-direction: column;
@@ -1493,6 +1554,11 @@ body:has(#contact-form) #contact-fab {
     animation: arcade-blackjack-tag-pulse 1.1s ease-in-out infinite;
 }
 
+.arcade-blackjack-tag--max {
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+}
+
 @keyframes arcade-blackjack-tag-pulse {
     0%,
     100% {
@@ -1510,6 +1576,20 @@ body:has(#contact-form) #contact-fab {
     font-family: ui-monospace, monospace;
     font-weight: 700;
     color: var(--color-neon-green);
+}
+
+.arcade-blackjack-hand__score--twenty-one {
+    color: var(--color-neon-yellow);
+    text-shadow:
+        0 0 10px rgb(255 230 0 / 65%),
+        0 0 20px rgb(255 230 0 / 35%);
+}
+
+.arcade-blackjack-hand__score--bust {
+    color: #ef4444;
+    text-shadow:
+        0 0 10px rgb(239 68 68 / 55%),
+        0 0 18px rgb(239 68 68 / 30%);
 }
 
 .arcade-blackjack-cards {
@@ -1545,6 +1625,22 @@ body:has(#contact-form) #contact-fab {
     border-color: rgb(191 0 255 / 45%);
 }
 
+@keyframes arcade-card-deal-in {
+    from {
+        opacity: 0;
+        transform: translateY(-1.25rem) scale(0.85);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.arcade-card--deal-in {
+    animation: arcade-card-deal-in 0.35s ease-out both;
+}
+
 .arcade-card__back {
     font-size: 1.5rem;
     font-weight: 700;
@@ -1560,6 +1656,132 @@ body:has(#contact-form) #contact-fab {
 .arcade-card__suit {
     font-size: 1.25rem;
     line-height: 1;
+}
+
+.arcade-blackjack-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem 2rem;
+}
+
+.arcade-blackjack-actions__play {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.arcade-blackjack-actions__bankroll {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    padding-left: 1.25rem;
+    border-left: 1px solid rgb(255 255 255 / 12%);
+}
+
+.arcade-blackjack-bankroll,
+.arcade-blackjack-bet {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.arcade-blackjack-bankroll__label,
+.arcade-blackjack-bet__label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgb(161 161 170);
+}
+
+.arcade-blackjack-bankroll__value {
+    font-family: ui-monospace, monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-neon-yellow);
+}
+
+.arcade-blackjack-bet__controls {
+    display: flex;
+    align-items: stretch;
+    gap: 0.35rem;
+}
+
+.arcade-blackjack-bet__field {
+    position: relative;
+}
+
+.arcade-blackjack-bet__stepper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.arcade-blackjack-bet__step {
+    display: inline-flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    min-height: 1.15rem;
+    border-radius: 0.35rem;
+    border: 1px solid rgb(57 255 20 / 35%);
+    background: rgb(0 0 0 / 35%);
+    color: var(--color-neon-green);
+    font-size: 0.75rem;
+    line-height: 1;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+.arcade-blackjack-bet__step:hover:not(:disabled) {
+    border-color: rgb(57 255 20 / 65%);
+    background: rgb(57 255 20 / 12%);
+}
+
+.arcade-blackjack-bet__step:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.arcade-blackjack-bet__input {
+    width: 5rem;
+    padding: 0.45rem 1.5rem 0.45rem 0.55rem;
+    border-radius: 0.45rem;
+    border: 1px solid rgb(57 255 20 / 35%);
+    background: rgb(0 0 0 / 35%);
+    color: #fafafa;
+    font-family: ui-monospace, monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.arcade-blackjack-bet__input:focus {
+    outline: none;
+    border-color: rgb(57 255 20 / 65%);
+    box-shadow: 0 0 0 2px rgb(57 255 20 / 15%);
+}
+
+.arcade-blackjack-bet__input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.arcade-blackjack-bet__suffix {
+    position: absolute;
+    right: 0.55rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: rgb(161 161 170);
+    pointer-events: none;
 }
 
 .arcade-blackjack-message {

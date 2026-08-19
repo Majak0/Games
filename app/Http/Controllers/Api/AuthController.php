@@ -43,6 +43,7 @@ class AuthController extends Controller
             'username' => $validated['username'],
             'email' => null,
             'password' => Hash::make($validated['password']),
+            'blackjack_bankroll' => 50,
         ]);
 
         Auth::login($user);

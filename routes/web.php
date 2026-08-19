@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BlackjackBankrollController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\CountryAssetController;
 use App\Http\Controllers\Api\GameScoreController;
@@ -27,6 +28,9 @@ Route::prefix('api')->group(function () {
     Route::get('/leaderboards/{game}/{mode}', [LeaderboardController::class, 'show']);
 
     Route::middleware('auth')->group(function () {
+        Route::get('/blackjack/bankroll', [BlackjackBankrollController::class, 'show']);
+        Route::put('/blackjack/bankroll', [BlackjackBankrollController::class, 'update']);
+        Route::post('/blackjack/bankroll/daily-bonus', [BlackjackBankrollController::class, 'claimDailyBonus']);
         Route::post('/scores', [GameScoreController::class, 'store']);
         Route::get('/scores/me', [GameScoreController::class, 'profile']);
     });
