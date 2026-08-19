@@ -18,49 +18,39 @@ function defaultStatus(bankroll: number): BankrollStatus {
     };
 }
 
-export async function fetchBankrollStatus(): Promise<BankrollStatus | null> {
-    const user = await fetchCurrentUser();
-
-    if (!user) {
-        return null;
+async function forAuthenticatedUser<T>(
+    action: () => Promise<T>,
+    fallback: T | null = null,
+): Promise<T | null> {
+    if (!(await fetchCurrentUser())) {
+        return fallback;
     }
 
     try {
-        return await apiFetch<BankrollStatus>('/api/blackjack/bankroll');
+        return await action();
     } catch {
-        return defaultStatus(STARTING_BANKROLL);
+        return fallback;
     }
+}
+
+export async function fetchBankrollStatus(): Promise<BankrollStatus | null> {
+    return forAuthenticatedUser(
+        () => apiFetch<BankrollStatus>('/api/blackjack/bankroll'),
+        defaultStatus(STARTING_BANKROLL),
+    );
 }
 
 export async function saveBankroll(bankroll: number): Promise<BankrollStatus | null> {
-    const user = await fetchCurrentUser();
-
-    if (!user) {
-        return null;
-    }
-
-    try {
-        return await apiFetch<BankrollStatus>('/api/blackjack/bankroll', {
+    return forAuthenticatedUser(() =>
+        apiFetch<BankrollStatus>('/api/blackjack/bankroll', {
             method: 'PUT',
             body: JSON.stringify({ bankroll }),
-        });
-    } catch {
-        return null;
-    }
+        }));
 }
 
 export async function claimDailyBonus(): Promise<BankrollStatus | null> {
-    const user = await fetchCurrentUser();
-
-    if (!user) {
-        return null;
-    }
-
-    try {
-        return await apiFetch<BankrollStatus>('/api/blackjack/bankroll/daily-bonus', {
+    return forAuthenticatedUser(() =>
+        apiFetch<BankrollStatus>('/api/blackjack/bankroll/daily-bonus', {
             method: 'POST',
-        });
-    } catch {
-        return null;
-    }
+        }));
 }

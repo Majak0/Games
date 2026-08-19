@@ -1,8 +1,6 @@
 import { mountTemplate } from '@/games/shared/template';
-import {
-    fetchSavedBestStreak,
-    saveBestStreakIfImproved,
-} from '@/scores/saveBestStreak';
+import { createStreakTracker } from '@/games/hasard/streakTracker';
+import { bindElements } from '@/shared/bindElements';
 import gameScreenHtml from './templates/html/gameScreen.html?raw';
 
 type CoinSide = 'heads' | 'tails';
@@ -10,11 +8,6 @@ type CoinSide = 'heads' | 'tails';
 const FLIP_DURATION_MS = 1600;
 
 interface CoinFlipState {
-    wins: number;
-    losses: number;
-    streak: number;
-    bestStreak: number;
-    savedBestStreak: number;
     flipping: boolean;
     rotationDeg: number;
 }
@@ -48,47 +41,36 @@ function prefersReducedMotion(): boolean {
 export function initPileOuFace(root: HTMLElement): void {
     mountTemplate(root, gameScreenHtml);
 
-    const coin = root.querySelector<HTMLElement>('#coin');
-    const launcher = root.querySelector<HTMLElement>('#coin-launcher');
-    const shadow = root.querySelector<HTMLElement>('#coin-shadow');
-    const resultEl = root.querySelector<HTMLElement>('#result');
-    const winsEl = root.querySelector<HTMLElement>('#wins');
-    const lossesEl = root.querySelector<HTMLElement>('#losses');
-    const bestStreakEl = root.querySelector<HTMLElement>('#best-streak');
-    const choiceButtons = root.querySelectorAll<HTMLButtonElement>('[data-choice]');
+    const elements = bindElements(root, {
+        coin: '#coin',
+        launcher: '#coin-launcher',
+        shadow: '#coin-shadow',
+        result: '#result',
+        wins: '#wins',
+        losses: '#losses',
+        bestStreak: '#best-streak',
+    });
 
-    if (!coin || !launcher || !shadow || !resultEl || !winsEl || !lossesEl || !bestStreakEl) {
+    if (!elements) {
         return;
     }
 
+    const choiceButtons = root.querySelectorAll<HTMLButtonElement>('[data-choice]');
+    const streak = createStreakTracker('pile-ou-face', {
+        wins: elements.wins,
+        losses: elements.losses,
+        bestStreak: elements.bestStreak,
+    });
+
     const state: CoinFlipState = {
-        wins: 0,
-        losses: 0,
-        streak: 0,
-        bestStreak: 0,
-        savedBestStreak: 0,
         flipping: false,
         rotationDeg: 0,
     };
 
     function applyRotation(degrees: number): void {
         state.rotationDeg = degrees;
-        coin.style.setProperty('--coin-rotation', `${degrees}deg`);
-        coin.style.transform = `rotateX(${degrees}deg)`;
-    }
-
-    function updateStats(): void {
-        winsEl.textContent = String(state.wins);
-        lossesEl.textContent = String(state.losses);
-        bestStreakEl.textContent = String(state.bestStreak);
-    }
-
-    async function persistBestStreak(): Promise<void> {
-        state.savedBestStreak = await saveBestStreakIfImproved(
-            'pile-ou-face',
-            state.bestStreak,
-            state.savedBestStreak
-        );
+        elements.coin.style.setProperty('--coin-rotation', `${degrees}deg`);
+        elements.coin.style.transform = `rotateX(${degrees}deg)`;
     }
 
     function setChoicesEnabled(enabled: boolean): void {
@@ -100,28 +82,23 @@ export function initPileOuFace(root: HTMLElement): void {
     function finishFlip(playerChoice: CoinSide, outcome: CoinSide, endRotation: number): void {
         applyRotation(endRotation);
 
-        coin.classList.remove('arcade-coin--spinning');
-        launcher.classList.remove('arcade-coin-launcher--toss');
-        shadow.classList.remove('arcade-coin-shadow--toss');
+        elements.coin.classList.remove('arcade-coin--spinning');
+        elements.launcher.classList.remove('arcade-coin-launcher--toss');
+        elements.shadow.classList.remove('arcade-coin-shadow--toss');
 
         const won = playerChoice === outcome;
 
         if (won) {
-            state.wins += 1;
-            state.streak += 1;
-            state.bestStreak = Math.max(state.bestStreak, state.streak);
-            resultEl.textContent = `Gagné ! La pièce est tombée sur ${sideLabel(outcome)}.`;
-            resultEl.className = 'arcade-coin-result arcade-coin-result--win';
-            void persistBestStreak();
+            streak.recordWin();
+            elements.result.textContent = `Gagné ! La pièce est tombée sur ${sideLabel(outcome)}.`;
+            elements.result.className = 'arcade-coin-result arcade-coin-result--win';
         } else {
-            state.losses += 1;
-            state.streak = 0;
-            resultEl.textContent = `Perdu… La pièce est tombée sur ${sideLabel(outcome)}.`;
-            resultEl.className = 'arcade-coin-result arcade-coin-result--lose';
+            streak.recordLoss();
+            elements.result.textContent = `Perdu… La pièce est tombée sur ${sideLabel(outcome)}.`;
+            elements.result.className = 'arcade-coin-result arcade-coin-result--lose';
         }
 
-        resultEl.hidden = false;
-        updateStats();
+        elements.result.hidden = false;
         state.flipping = false;
         setChoicesEnabled(true);
     }
@@ -129,7 +106,7 @@ export function initPileOuFace(root: HTMLElement): void {
     function playFlip(playerChoice: CoinSide, outcome: CoinSide): void {
         state.flipping = true;
         setChoicesEnabled(false);
-        resultEl.hidden = true;
+        elements.result.hidden = true;
 
         const endRotation = computeSpinEnd(state.rotationDeg, outcome);
 
@@ -138,17 +115,17 @@ export function initPileOuFace(root: HTMLElement): void {
             return;
         }
 
-        coin.style.setProperty('--coin-spin-start', `${state.rotationDeg}deg`);
-        coin.style.setProperty('--coin-spin-end', `${endRotation}deg`);
+        elements.coin.style.setProperty('--coin-spin-start', `${state.rotationDeg}deg`);
+        elements.coin.style.setProperty('--coin-spin-end', `${endRotation}deg`);
 
-        coin.classList.remove('arcade-coin--spinning');
-        launcher.classList.remove('arcade-coin-launcher--toss');
-        shadow.classList.remove('arcade-coin-shadow--toss');
-        void coin.offsetWidth;
+        elements.coin.classList.remove('arcade-coin--spinning');
+        elements.launcher.classList.remove('arcade-coin-launcher--toss');
+        elements.shadow.classList.remove('arcade-coin-shadow--toss');
+        void elements.coin.offsetWidth;
 
-        coin.classList.add('arcade-coin--spinning');
-        launcher.classList.add('arcade-coin-launcher--toss');
-        shadow.classList.add('arcade-coin-shadow--toss');
+        elements.coin.classList.add('arcade-coin--spinning');
+        elements.launcher.classList.add('arcade-coin-launcher--toss');
+        elements.shadow.classList.add('arcade-coin-shadow--toss');
 
         window.setTimeout(() => {
             finishFlip(playerChoice, outcome, endRotation);
@@ -172,11 +149,5 @@ export function initPileOuFace(root: HTMLElement): void {
     });
 
     applyRotation(0);
-    updateStats();
-
-    void fetchSavedBestStreak('pile-ou-face').then((saved) => {
-        state.savedBestStreak = saved;
-        state.bestStreak = Math.max(state.bestStreak, saved);
-        updateStats();
-    });
+    void streak.hydrate();
 }
