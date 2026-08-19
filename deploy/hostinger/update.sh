@@ -16,6 +16,9 @@ echo "==> Migrations"
 $PHP_BIN artisan migrate --force
 
 echo "==> Cache production"
+$PHP_BIN artisan config:clear
+$PHP_BIN artisan route:clear
+$PHP_BIN artisan view:clear
 $PHP_BIN artisan config:cache
 $PHP_BIN artisan route:cache
 $PHP_BIN artisan view:cache

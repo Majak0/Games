@@ -12,7 +12,10 @@ concurrency:
 env:
   PHP_VERSION: '8.3'
   NODE_VERSION: '22'
-  DEPLOY_PATH: /home/u663389318/domains/arcadiahub.fr/Games
+  # Racine Laravel sur Hostinger (document root = public/ à l'intérieur).
+  # Ne pas déployer dans un sous-dossier Games/ : le site arcadiahub.fr
+  # est servi depuis ce répertoire, pas depuis Games/.
+  DEPLOY_PATH: /home/u663389318/domains/arcadiahub.fr
 
 jobs:
   deploy:
@@ -69,7 +72,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             echo "SSH OK — $(whoami)@$(hostname)"
-            test -d "${{ env.DEPLOY_PATH }}" && echo "DEPLOY_PATH exists" || echo "DEPLOY_PATH missing — create Games/ on server first"
+            test -f "${{ env.DEPLOY_PATH }}/artisan" && echo "DEPLOY_PATH OK (artisan found)" || echo "DEPLOY_PATH missing — Laravel root not found on server"
 
       - name: Upload archive
         uses: appleboy/scp-action@v0.1.7
@@ -95,7 +98,6 @@ jobs:
             bash deploy/hostinger/update.sh
 
       - name: Health check
-        continue-on-error: true
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -104,3 +106,15 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             curl -sf -o /dev/null -w "HTTP %{http_code}\n" "https://arcadiahub.fr/up"
+            HTML="$(curl -sfL "https://arcadiahub.fr/")"
+            echo "$HTML" | grep -q 'id="contact-fab"' || {
+              echo "ERREUR : la page d'accueil ne contient pas #contact-fab — mauvais DEPLOY_PATH ou cache obsolète." >&2
+              exit 1
+            }
+            MANIFEST_HASH="$(grep -o 'app-[A-Za-z0-9_-]*\.js' <<< "$HTML" | head -1)"
+            DISK_HASH="$(grep -o 'app-[A-Za-z0-9_-]*\.js' "${{ env.DEPLOY_PATH }}/public/build/manifest.json" | head -1)"
+            echo "Site: $MANIFEST_HASH — déployé: $DISK_HASH"
+            test "$MANIFEST_HASH" = "$DISK_HASH" || {
+              echo "ERREUR : les assets servis ne correspondent pas au build déployé." >&2
+              exit 1
+            }
