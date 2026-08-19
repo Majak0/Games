@@ -7,6 +7,7 @@ use App\Mail\ContactMessage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Throwable;
@@ -64,8 +65,17 @@ class ContactController extends Controller
 
         $files = is_array($files) ? array_values($files) : [];
 
+        $recipient = config('mail.contact.address');
+        if (! is_string($recipient) || ! filled($recipient)) {
+            Log::error('Contact form: MAIL_CONTACT_ADDRESS is not configured.');
+
+            return response()->json([
+                'message' => 'L\'envoi du message a échoué. Réessayez dans un instant.',
+            ], 500);
+        }
+
         try {
-            Mail::to(config('mail.contact.address'))->send(new ContactMessage(
+            Mail::to($recipient)->send(new ContactMessage(
                 topic: $topic,
                 bodyText: $validated['message'],
                 senderEmail: $senderEmail,
@@ -73,9 +83,21 @@ class ContactController extends Controller
                 username: $request->user()?->username,
                 files: $files,
             ));
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            report($exception);
+            Log::error('Contact form: mail send failed.', [
+                'exception' => $exception->getMessage(),
+                'mailer' => config('mail.default'),
+                'host' => config('mail.mailers.smtp.host'),
+                'from' => config('mail.from.address'),
+            ]);
+
+            $message = config('app.debug')
+                ? 'L\'envoi a échoué : '.$exception->getMessage()
+                : 'L\'envoi du message a échoué. Réessayez dans un instant.';
+
             return response()->json([
-                'message' => 'L\'envoi du message a échoué. Réessayez dans un instant.',
+                'message' => $message,
             ], 500);
         }
 

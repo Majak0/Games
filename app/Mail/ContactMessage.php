@@ -45,13 +45,20 @@ class ContactMessage extends Mailable
      */
     public function attachments(): array
     {
-        return array_map(
-            function (UploadedFile $file): Attachment {
-                return Attachment::fromPath($file->getRealPath())
-                    ->as($file->getClientOriginalName())
-                    ->withMime($file->getMimeType() ?: 'application/octet-stream');
-            },
-            $this->files,
-        );
+        $attachments = [];
+
+        foreach ($this->files as $file) {
+            $path = $file->getRealPath();
+
+            if ($path === false) {
+                continue;
+            }
+
+            $attachments[] = Attachment::fromPath($path)
+                ->as($file->getClientOriginalName())
+                ->withMime($file->getMimeType() ?: 'application/octet-stream');
+        }
+
+        return $attachments;
     }
 }
