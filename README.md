@@ -25,7 +25,8 @@ TypeScript sera ajouté progressivement pour la logique des jeux côté client.
 
 | Jeu | Description | Statut |
 |-----|-------------|--------|
-| **Morpion** | Jeu du morpion / Tic-tac-toe. Possibilité future de faire un salon multijoueur. | En cours |
+| **Morpion** | Jeu du morpion / Tic-tac-toe. Possibilité future de faire un salon multijoueur. | Prochainement |
+| **Trouve le logo** | Comme pour les drapeaux ou pays, un logo s'affiche à toi de trouver le nom de la marque. | En cours |
 | **Succès** | Quelques petits succès liés au profil utilisateur. | En cours |
 
 ## Installation (local)
@@ -45,7 +46,3 @@ Pour le développement avec rechargement automatique :
 ```bash
 composer dev
 ```
-
-## Licence
-
-MIT
