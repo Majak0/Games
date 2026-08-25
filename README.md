@@ -13,7 +13,7 @@ Ce projet rassemble plusieurs petits jeux en ligne sur un même site. Chaque jeu
 | Backend | [Laravel](https://laravel.com) 13 (PHP 8.3) |
 | Frontend | JavaScript, [Vite](https://vitejs.dev) |
 | Styles | [Tailwind CSS](https://tailwindcss.com) 4 |
-| Base de données | SQLite (en local) |
+| Base de données | SQLite |
 
 TypeScript sera ajouté progressivement pour la logique des jeux côté client.
 
