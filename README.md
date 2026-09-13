@@ -1,48 +1,37 @@
-# Games
+# Arcadia
 
-Site personnel de mini-jeux, codés de A à Z.
+Site personnel de mini-jeux, disponible sur [arcadiahub.fr](https://arcadiahub.fr).
 
 ## À propos
 
-Ce projet rassemble plusieurs petits jeux en ligne sur un même site. Chaque jeu est développé individuellement et ajouté au catalogue au fil du temps.
+Arcadia rassemble plusieurs jeux en ligne dans une même arcade. Un compte permet d’enregistrer ses meilleurs scores, de consulter les classements et de récupérer un bonus quotidien au blackjack.
 
 ## Technologies
 
 | Couche | Technologie |
 |--------|-------------|
 | Backend | [Laravel](https://laravel.com) 13 (PHP 8.3) |
-| Frontend | JavaScript, [Vite](https://vitejs.dev) |
-| Styles | [Tailwind CSS](https://tailwindcss.com) 4 |
-| Base de données | SQLite |
+| Frontend | TypeScript, [Vite](https://vitejs.dev) |
+| Styles | [Tailwind CSS](https://tailwindcss.com) 4, CSS arcade |
+| Base de données | SQLite en local, MySQL possible en production |
 
-TypeScript sera ajouté progressivement pour la logique des jeux côté client.
+## Jeux disponibles
 
-## Jeux déployés
+| Jeu | Modes |
+|-----|--------|
+| **Quiz des drapeaux** | 259 drapeaux, 197 drapeaux, contre-la-montre (3 / 5 / 10 / 15 min), saisie à l’aveugle |
+| **Quiz des formes** | Compléter la carte, 197 pays, contre-la-montre, saisie à l’aveugle |
+| **Quiz des logos** | Logos floutés, noir et blanc, catégories (nourriture, informatique, vêtements…), contre-la-montre |
+| **Jeux de hasard** | Pile ou face, blackjack |
 
-**Trouve le drapeau** - **Trouve le pays** - **Jeux de hasard**
+Les logos viennent de [Simple Icons](https://simpleicons.org) et de Wikimedia Commons (via Wikidata). Les réponses restent côté serveur pour limiter les spoilers.
 
 ## En développement
 
 | Jeu | Description | Statut |
 |-----|-------------|--------|
-| **Morpion** | Jeu du morpion / Tic-tac-toe. Possibilité future de faire un salon multijoueur. | Prochainement |
-| **Trouve le logo** | Comme pour les drapeaux ou pays, un logo s'affiche à toi de trouver le nom de la marque. | En cours |
-| **Succès** | Quelques petits succès liés au profil utilisateur. | En cours |
+| **Morpion** | Tic-tac-toe, avec un salon multijoueur possible plus tard. | Prochainement |
+| **Succès** | Petits succès liés au profil. | En cours |
 
-## Installation (local)
 
-```bash
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate
-npm install
-npm run build
-php artisan serve
-```
-
-Pour le développement avec rechargement automatique :
-
-```bash
-composer dev
-```
+Le site est ensuite accessible sur `https://arcadiahub.fr/`.
