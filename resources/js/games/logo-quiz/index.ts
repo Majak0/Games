@@ -15,7 +15,7 @@ import gameScreenHtml from './templates/html/gameScreen.html?raw';
 
 function foundLogoThumb(logo: FoundLogo): string {
     return fillTemplate(
-        '<span class="arcade-logo-thumb" title="{{name}}"><img src="{{imageUrl}}" alt="{{name}}" /></span>',
+        '<span class="arcade-logo-thumb" title="{{name}}"><img src="{{imageUrl}}" alt="{{name}}" decoding="async" loading="lazy" /></span>',
         { name: logo.name, imageUrl: logo.visual_url },
         ['imageUrl'],
     );
@@ -87,18 +87,33 @@ export async function initLogoQuiz(root: HTMLElement, mode: LogoQuizMode): Promi
     }
 
     function applyPayload(next: LogoQuizPayload): void {
+        const previousFoundCount = payload.found.length;
         payload = next;
         remainingDisplay.textContent = `Restants : ${next.remaining}`;
         scoreDisplay.textContent = scoreLabel(next.score);
-        foundList.innerHTML = next.found.map(foundLogoThumb).join('');
 
-        logoImage.className = [
+        if (next.found.length < previousFoundCount) {
+            foundList.replaceChildren();
+            next.found.forEach((logo) => {
+                foundList.insertAdjacentHTML('beforeend', foundLogoThumb(logo));
+            });
+        } else {
+            for (let index = previousFoundCount; index < next.found.length; index++) {
+                foundList.insertAdjacentHTML('beforeend', foundLogoThumb(next.found[index]));
+            }
+        }
+
+        const nextClass = [
             'arcade-logo-frame__image',
             mode.imageClass,
             next.wordmark ? 'arcade-logo-frame__image--wordmark' : '',
         ].filter(Boolean).join(' ');
 
-        if (next.visual_url) {
+        if (logoImage.className !== nextClass) {
+            logoImage.className = nextClass;
+        }
+
+        if (next.visual_url && logoImage.getAttribute('src') !== next.visual_url) {
             logoImage.src = next.visual_url;
         }
     }
@@ -169,27 +184,33 @@ export async function initLogoQuiz(root: HTMLElement, mode: LogoQuizMode): Promi
                 return;
             }
 
-            applyPayload(result);
-
-            if (result.result === 'correct') {
-                input.value = '';
-                input.focus();
-
-                if (mode.endOnComplete && result.completed) {
-                    endGame(true);
-                    return;
-                }
-
-                updateFeedback('Exact !', 'arcade-feedback--success');
+            if (result.result !== 'correct') {
+                updateFeedback(
+                    result.result === 'close'
+                        ? 'Vous êtes proche !'
+                        : 'Ce n’est pas la bonne marque.',
+                    result.result === 'close' ? 'arcade-feedback--close' : 'arcade-feedback--error',
+                );
                 return;
             }
 
-            updateFeedback(
-                result.result === 'close'
-                    ? 'Vous êtes proche !'
-                    : 'Ce n’est pas la bonne marque.',
-                result.result === 'close' ? 'arcade-feedback--close' : 'arcade-feedback--error',
-            );
+            applyPayload({
+                remaining: result.remaining ?? payload.remaining,
+                score: result.score ?? payload.score,
+                completed: result.completed ?? false,
+                visual_url: result.visual_url ?? null,
+                wordmark: result.wordmark ?? false,
+                found: result.found ?? payload.found,
+            });
+            input.value = '';
+            input.focus();
+
+            if (mode.endOnComplete && result.completed) {
+                endGame(true);
+                return;
+            }
+
+            updateFeedback('Exact !', 'arcade-feedback--success');
         } catch {
             if (version === requestVersion && !gameEnded) {
                 updateFeedback('Vérification impossible.', 'arcade-feedback--error');
@@ -201,7 +222,7 @@ export async function initLogoQuiz(root: HTMLElement, mode: LogoQuizMode): Promi
         window.clearTimeout(guessTimer);
         guessTimer = window.setTimeout(() => {
             void submitGuess();
-        }, 180);
+        }, 320);
     }
 
     input.addEventListener('input', scheduleGuess);

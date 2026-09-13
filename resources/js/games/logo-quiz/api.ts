@@ -14,7 +14,7 @@ export interface LogoQuizPayload {
     found: FoundLogo[];
 }
 
-export interface LogoGuessPayload extends LogoQuizPayload {
+export interface LogoGuessPayload extends Partial<LogoQuizPayload> {
     result: 'correct' | 'close' | 'wrong';
 }
 

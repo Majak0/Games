@@ -1,4 +1,4 @@
-import { fetchCurrentUser } from '@/lib/auth';
+import { fetchCurrentUser, logout } from '@/lib/auth';
 import { normalizePath } from '@/shared/path';
 
 function isNavOpen(nav: HTMLElement): boolean {
@@ -47,6 +47,7 @@ async function hydrateAccountLink(nav: HTMLElement): Promise<void> {
         return;
     }
 
+    const logoutButton = nav.querySelector<HTMLButtonElement>('#site-nav-logout');
     const user = await fetchCurrentUser();
 
     if (user) {
@@ -56,6 +57,10 @@ async function hydrateAccountLink(nav: HTMLElement): Promise<void> {
         meta.hidden = false;
         icon.className = 'bi bi-person-fill';
         link.classList.add('arcade-site-nav__link--connected');
+
+        if (logoutButton) {
+            logoutButton.hidden = false;
+        }
     } else {
         link.href = '/compte/connexion';
         label.textContent = 'Connexion';
@@ -63,6 +68,10 @@ async function hydrateAccountLink(nav: HTMLElement): Promise<void> {
         meta.hidden = true;
         icon.className = 'bi bi-box-arrow-in-right';
         link.classList.remove('arcade-site-nav__link--connected');
+
+        if (logoutButton) {
+            logoutButton.hidden = true;
+        }
     }
 }
 
@@ -84,7 +93,10 @@ export async function initSiteNav(): Promise<void> {
     const firstLink = (): HTMLAnchorElement | null => drawer.querySelector('a');
 
     const focusable = (): HTMLElement[] => (
-        [toggle, ...drawer.querySelectorAll<HTMLElement>('a')]
+        [
+            toggle,
+            ...drawer.querySelectorAll<HTMLElement>('a, button:not([hidden])'),
+        ]
     );
 
     const open = (): void => {
@@ -117,6 +129,11 @@ export async function initSiteNav(): Promise<void> {
     });
 
     backdrop.addEventListener('click', closeNav);
+
+    nav.querySelector('#site-nav-logout')?.addEventListener('click', async () => {
+        await logout();
+        window.location.href = '/';
+    });
 
     window.addEventListener('keydown', (event) => {
         if (!isNavOpen(nav)) {

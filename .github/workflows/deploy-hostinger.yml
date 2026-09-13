@@ -53,9 +53,13 @@ jobs:
             --exclude='.git' \
             --exclude='.github' \
             --exclude='.env' \
+            --exclude='.env.*' \
             --exclude='node_modules' \
             --exclude='tests' \
             --exclude='deploy/output' \
+            --exclude='database/*.sqlite' \
+            --exclude='database/*.sqlite-*' \
+            --exclude='public/hot' \
             --exclude='storage/logs' \
             --exclude='storage/framework/cache/data' \
             --exclude='storage/framework/sessions' \

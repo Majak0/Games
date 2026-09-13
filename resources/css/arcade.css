@@ -1280,6 +1280,11 @@ body:has(.arcade-hud-bar) .arcade-site-nav.is-open .arcade-site-nav__toggle {
     list-style: none;
 }
 
+.arcade-site-nav__footer {
+    margin-top: auto;
+    padding-top: 1.25rem;
+}
+
 .arcade-site-nav__link {
     display: flex;
     align-items: center;
@@ -1313,6 +1318,21 @@ body:has(.arcade-hud-bar) .arcade-site-nav.is-open .arcade-site-nav__toggle {
 
 .arcade-site-nav__link--connected i {
     color: var(--color-neon-green);
+}
+
+.arcade-site-nav__link--logout {
+    width: 100%;
+    cursor: pointer;
+}
+
+.arcade-site-nav__link--logout i {
+    color: #fb7185;
+}
+
+.arcade-site-nav__link--logout:hover {
+    border-color: rgb(251 113 133 / 55%);
+    background: rgb(251 113 133 / 12%);
+    box-shadow: 0 0 18px rgb(251 113 133 / 16%);
 }
 
 .arcade-site-nav__link-text {

@@ -59,6 +59,12 @@
                         </a>
                     </li>
                 </ul>
+                <div class="arcade-site-nav__footer">
+                    <button type="button" id="site-nav-logout" class="arcade-site-nav__link arcade-site-nav__link--logout" hidden>
+                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                        <span>Déconnexion</span>
+                    </button>
+                </div>
             </div>
         </nav>
         @yield('content')

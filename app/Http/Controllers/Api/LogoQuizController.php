@@ -69,22 +69,31 @@ class LogoQuizController extends Controller
         }
     }
 
-    public function visual(): Response
+    public function visual(Request $request): Response
     {
-        return $this->svgResponse(fn (): string => $this->quiz->currentSvg());
+        $token = (string) $request->query('t', '');
+
+        return $this->visualResponse(fn (): array => $this->quiz->visualByToken($token));
     }
 
     public function found(string $token): Response
     {
-        return $this->svgResponse(fn (): string => $this->quiz->foundSvg($token));
+        return $this->visualResponse(fn (): array => $this->quiz->foundByToken($token));
     }
 
-    private function svgResponse(callable $resolver): Response
+    /**
+     * @param  callable(): array{body: string, mime: string}  $resolver
+     */
+    private function visualResponse(callable $resolver): Response
     {
         try {
-            return response($resolver(), HttpResponse::HTTP_OK, [
-                'Content-Type' => 'image/svg+xml; charset=utf-8',
-                'Cache-Control' => 'private, no-store, no-cache, must-revalidate',
+            $visual = $resolver();
+
+            return response($visual['body'], HttpResponse::HTTP_OK, [
+                'Content-Type' => $visual['mime'],
+                'Cache-Control' => 'private, max-age=3600',
+                'X-Content-Type-Options' => 'nosniff',
+                'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:",
             ]);
         } catch (RuntimeException) {
             abort(HttpResponse::HTTP_NOT_FOUND);

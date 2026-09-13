@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Logo;
 use App\Support\LogoCategories;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -13,6 +14,8 @@ class LogoQuizService
     public const SESSION_KEY = 'logo_quiz';
 
     public const SIMPLE_ICONS_VERSION = 'v16';
+
+    private const VISUAL_TTL = 3600;
 
     private bool $allowInsecure = false;
 
@@ -24,7 +27,7 @@ class LogoQuizService
     }
 
     /**
-     * @return array{remaining: int, score: int, completed: bool, visual_url: string|null, found: list<array{name: string, visual_url: string}>}
+     * @return array{remaining: int, score: int, completed: bool, visual_url: string|null, wordmark: bool, found: list<array{name: string, visual_url: string}>}
      */
     public function start(string $style, ?string $category = null): array
     {
@@ -40,15 +43,9 @@ class LogoQuizService
             $category = null;
         }
 
-        $query = Logo::query();
+        $total = $this->logoQuery($category)->count();
 
-        if ($category !== null) {
-            $query->where('category', $category);
-        }
-
-        $ids = $query->pluck('id')->all();
-
-        if ($ids === []) {
+        if ($total === 0) {
             throw new RuntimeException(
                 $category === null
                     ? 'Aucun logo disponible. Lancez php artisan logos:sync.'
@@ -56,20 +53,14 @@ class LogoQuizService
             );
         }
 
-        shuffle($ids);
-
-        $currentId = array_values($ids)[0];
-
-        $state = [
-            'current_id' => $currentId,
-            'visual_token' => Str::random(32),
-            'pool' => array_values($ids),
+        $state = $this->pickNext([
             'passed' => [],
             'found' => [],
             'score' => 0,
             'style' => $style,
             'category' => $category,
-        ];
+            'total' => $total,
+        ]);
 
         session([self::SESSION_KEY => $state]);
 
@@ -81,97 +72,81 @@ class LogoQuizService
      */
     public function categories(): array
     {
-        $counts = Logo::query()
-            ->whereNotNull('category')
-            ->selectRaw('category, count(*) as aggregate')
-            ->groupBy('category')
-            ->pluck('aggregate', 'category');
+        /** @var list<array{id: string, label: string, count: int}> $items */
+        $items = Cache::remember('logo_quiz.categories', 600, function (): array {
+            $counts = Logo::query()
+                ->whereNotNull('category')
+                ->selectRaw('category, count(*) as aggregate')
+                ->groupBy('category')
+                ->pluck('aggregate', 'category');
 
-        $items = [];
+            $items = [];
 
-        foreach (LogoCategories::all() as $id => $meta) {
-            $count = (int) ($counts[$id] ?? 0);
+            foreach (LogoCategories::all() as $id => $meta) {
+                $count = (int) ($counts[$id] ?? 0);
 
-            if ($count === 0) {
-                continue;
+                if ($count === 0) {
+                    continue;
+                }
+
+                $items[] = [
+                    'id' => $id,
+                    'label' => $meta['label'],
+                    'count' => $count,
+                ];
             }
 
-            $items[] = [
-                'id' => $id,
-                'label' => $meta['label'],
-                'count' => $count,
-            ];
-        }
+            return $items;
+        });
 
         return $items;
     }
 
     /**
-     * @return array{result: string, remaining: int, score: int, completed: bool, visual_url: string|null, found: list<array{name: string, visual_url: string}>}
+     * @return array{result: string, remaining?: int, score?: int, completed?: bool, visual_url?: string|null, wordmark?: bool, found?: list<array{name: string, visual_url: string}>}
      */
     public function guess(string $answer): array
     {
         $state = $this->state();
-        $logo = $this->currentLogo($state);
-
-        $result = $this->grade($logo, $answer);
+        $result = $this->grade($state['answers'] ?? [], $answer);
 
         if ($result !== 'correct') {
-            return ['result' => $result, ...$this->payload($state)];
+            return ['result' => $result];
         }
 
-        $state = $this->advanceAfterCorrect($state, $logo);
+        $state = $this->advanceAfterCorrect($state);
         session([self::SESSION_KEY => $state]);
 
         return ['result' => 'correct', ...$this->payload($state)];
     }
 
     /**
-     * @return array{remaining: int, score: int, completed: bool, visual_url: string|null, found: list<array{name: string, visual_url: string}>}
+     * @return array{remaining: int, score: int, completed: bool, visual_url: string|null, wordmark: bool, found: list<array{name: string, visual_url: string}>}
      */
     public function skip(): array
     {
         $state = $this->state();
-        $currentId = $state['current_id'];
-
-        $state['pool'] = array_values(array_filter(
-            $state['pool'],
-            fn (int $id): bool => $id !== $currentId
-        ));
-        $state['passed'][] = $currentId;
-        $state = $this->ensurePool($state);
+        $state['passed'][] = $state['current_id'];
         $state = $this->pickNext($state);
-
         session([self::SESSION_KEY => $state]);
 
         return $this->payload($state);
     }
 
-    public function currentSvg(): string
+    /**
+     * @return array{body: string, mime: string}
+     */
+    public function visualByToken(string $token): array
     {
-        $state = $this->state();
-
-        return $this->hideBrandName(
-            $this->svgFor($this->currentLogo($state), ($state['style'] ?? 'flou') !== 'nb')
-        );
+        return $this->resolveVisual($this->visualMetaKey($token), $this->visualBodyKey($token));
     }
 
-    public function foundSvg(string $token): string
+    /**
+     * @return array{body: string, mime: string}
+     */
+    public function foundByToken(string $token): array
     {
-        $state = $this->state();
-        $found = collect($state['found'])->firstWhere('token', $token);
-
-        if (! is_array($found) || ! isset($found['id'])) {
-            throw new RuntimeException('Logo introuvable.');
-        }
-
-        $logo = Logo::query()->find($found['id']);
-
-        if (! $logo) {
-            throw new RuntimeException('Logo introuvable.');
-        }
-
-        return $this->svgFor($logo, true);
+        return $this->resolveVisual($this->foundMetaKey($token), $this->foundBodyKey($token));
     }
 
     /**
@@ -221,6 +196,7 @@ class LogoQuizService
         }
 
         $categorized = $this->applyCategories();
+        Cache::forget('logo_quiz.categories');
 
         return [
             'imported' => $imported,
@@ -271,6 +247,8 @@ class LogoQuizService
             $assigned += Logo::query()->whereIn('id', $ids)->update(['category' => $category]);
         }
 
+        Cache::forget('logo_quiz.categories');
+
         /** @var array<string, int> $counts */
         $counts = Logo::query()
             ->whereNotNull('category')
@@ -286,22 +264,19 @@ class LogoQuizService
     }
 
     /**
-     * @param  array{current_id: int, visual_token: string, pool: list<int>, passed: list<int>, found: list<array{id: int, token: string, name: string}>, score: int}  $state
+     * @param  array<string, mixed>  $state
      * @return array{remaining: int, score: int, completed: bool, visual_url: string|null, wordmark: bool, found: list<array{name: string, visual_url: string}>}
      */
     private function payload(array $state): array
     {
-        $completed = $state['pool'] === [] && $state['passed'] === [];
-        $current = $completed ? null : $this->currentLogo($state);
+        $completed = (int) ($state['current_id'] ?? 0) === 0;
 
         return [
-            'remaining' => count($state['pool']) + count($state['passed']),
+            'remaining' => max(0, (int) $state['total'] - count($state['found'])),
             'score' => $state['score'],
             'completed' => $completed,
-            'visual_url' => $completed
-                ? null
-                : '/api/logo-quiz/visual?t='.$state['visual_token'],
-            'wordmark' => $current !== null && $this->isWordmark($current),
+            'visual_url' => $completed ? null : '/api/logo-quiz/visual?t='.$state['visual_token'],
+            'wordmark' => (bool) ($state['wordmark'] ?? false),
             'found' => array_map(fn (array $item): array => [
                 'name' => $item['name'],
                 'visual_url' => '/api/logo-quiz/found/'.$item['token'],
@@ -310,7 +285,7 @@ class LogoQuizService
     }
 
     /**
-     * @return array{current_id: int, visual_token: string, pool: list<int>, passed: list<int>, found: list<array{id: int, token: string, name: string}>, score: int}
+     * @return array<string, mixed>
      */
     private function state(): array
     {
@@ -321,97 +296,128 @@ class LogoQuizService
         }
 
         $state['current_id'] = (int) $state['current_id'];
-        $state['pool'] = array_map(intval(...), $state['pool'] ?? []);
         $state['passed'] = array_map(intval(...), $state['passed'] ?? []);
+        $state['answers'] = array_values(array_filter(
+            $state['answers'] ?? [],
+            fn (mixed $value): bool => is_string($value) && $value !== ''
+        ));
 
         return $state;
     }
 
     /**
-     * @param  array{current_id: int, visual_token: string, pool: list<int>, passed: list<int>, found: list<array{id: int, token: string, name: string}>, score: int}  $state
+     * @param  array<string, mixed>  $state
+     * @return array<string, mixed>
      */
-    private function currentLogo(array $state): Logo
+    private function advanceAfterCorrect(array $state): array
     {
-        $logo = Logo::query()->find($state['current_id']);
+        $token = Str::random(24);
 
-        if (! $logo) {
-            throw new RuntimeException('Logo introuvable.');
-        }
-
-        return $logo;
-    }
-
-    /**
-     * @param  array{current_id: int, visual_token: string, pool: list<int>, passed: list<int>, found: list<array{id: int, token: string, name: string}>, score: int}  $state
-     * @return array{current_id: int, visual_token: string, pool: list<int>, passed: list<int>, found: list<array{id: int, token: string, name: string}>, score: int}
-     */
-    private function advanceAfterCorrect(array $state, Logo $logo): array
-    {
-        $state['pool'] = array_values(array_filter(
-            $state['pool'],
-            fn (int $id): bool => $id !== $logo->id
-        ));
         $state['found'][] = [
-            'id' => $logo->id,
-            'token' => Str::random(24),
-            'name' => $logo->name,
+            'id' => $state['current_id'],
+            'token' => $token,
+            'name' => (string) ($state['current_name'] ?? 'Logo'),
         ];
+        $this->storeVisualMeta($this->foundMetaKey($token), (int) $state['current_id'], true, false);
         $state['score']++;
-        $state = $this->ensurePool($state);
-
-        if ($state['pool'] === []) {
-            $state['current_id'] = 0;
-            $state['visual_token'] = '';
-
-            return $state;
-        }
+        $state['passed'] = array_values(array_filter(
+            $state['passed'],
+            fn (int $id): bool => $id !== (int) $state['current_id']
+        ));
 
         return $this->pickNext($state);
     }
 
     /**
-     * @param  array{current_id: int, visual_token: string, pool: list<int>, passed: list<int>, found: list<array{id: int, token: string, name: string}>, score: int}  $state
-     * @return array{current_id: int, visual_token: string, pool: list<int>, passed: list<int>, found: list<array{id: int, token: string, name: string}>, score: int}
+     * @param  array<string, mixed>  $state
+     * @return array<string, mixed>
      */
-    private function ensurePool(array $state): array
+    private function pickNext(array $state): array
     {
-        if ($state['pool'] !== [] || $state['passed'] === []) {
+        $foundIds = array_map(
+            fn (array $item): int => (int) $item['id'],
+            $state['found']
+        );
+        $exclude = array_values(array_unique(array_merge($foundIds, $state['passed'])));
+        $logo = $this->randomLogo($state['category'] ?? null, $exclude);
+
+        if (! $logo && $state['passed'] !== []) {
+            $state['passed'] = [];
+            $logo = $this->randomLogo($state['category'] ?? null, $foundIds);
+        }
+
+        if (! $logo) {
+            $state['current_id'] = 0;
+            $state['visual_token'] = '';
+            $state['answers'] = [];
+            $state['current_name'] = '';
+            $state['wordmark'] = false;
+
             return $state;
         }
 
-        $state['pool'] = array_values($state['passed']);
-        $state['passed'] = [];
+        $token = Str::random(32);
+        $state['current_id'] = $logo->id;
+        $state['visual_token'] = $token;
+        $state['answers'] = array_map(
+            fn (string $value): string => $this->normalize($value),
+            $logo->answerList()
+        );
+        $state['current_name'] = $logo->name;
+        $state['wordmark'] = $this->isWordmarkPreview((string) ($logo->preview ?? ''));
+        $this->storeVisualMeta(
+            $this->visualMetaKey($token),
+            $logo->id,
+            ($state['style'] ?? 'flou') !== 'nb',
+            true
+        );
 
         return $state;
     }
 
     /**
-     * @param  array{current_id: int, visual_token: string, pool: list<int>, passed: list<int>, found: list<array{id: int, token: string, name: string}>, score: int}  $state
-     * @return array{current_id: int, visual_token: string, pool: list<int>, passed: list<int>, found: list<array{id: int, token: string, name: string}>, score: int}
+     * @param  list<int>  $exclude
      */
-    private function pickNext(array $state): array
+    private function randomLogo(?string $category, array $exclude): ?Logo
     {
-        $state['current_id'] = $state['pool'][array_rand($state['pool'])];
-        $state['visual_token'] = Str::random(32);
+        $query = $this->logoQuery($category)
+            ->select(['id', 'name', 'synonyms', 'source'])
+            ->selectRaw('substr(svg, 1, 2000) as preview');
 
-        return $state;
+        if ($exclude !== []) {
+            $query->whereNotIn('id', $exclude);
+        }
+
+        return $query->inRandomOrder()->first();
     }
 
-    private function grade(Logo $logo, string $answer): string
+    private function logoQuery(?string $category): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Logo::query();
+
+        if ($category !== null) {
+            $query->where('category', $category);
+        }
+
+        return $query;
+    }
+
+    /**
+     * @param  list<string>  $answers
+     */
+    private function grade(array $answers, string $answer): string
     {
         $normalized = $this->normalize($answer);
 
-        if ($normalized === '') {
+        if ($normalized === '' || $answers === []) {
             return 'wrong';
         }
-
-        $answers = array_map(fn (string $value): string => $this->normalize($value), $logo->answerList());
 
         if (in_array($normalized, $answers, true)) {
             return 'correct';
         }
 
-        $threshold = max(1, min(2, (int) floor(mb_strlen($answers[0] ?? '') * 0.25)));
+        $threshold = max(1, min(2, (int) floor(mb_strlen($answers[0]) * 0.25)));
 
         foreach ($answers as $candidate) {
             if (levenshtein($normalized, $candidate) <= $threshold) {
@@ -430,10 +436,84 @@ class LogoQuizService
         return (string) preg_replace('/\s+/', ' ', $text);
     }
 
+    private function storeVisualMeta(string $key, int $id, bool $colorize, bool $hideName): void
+    {
+        Cache::put($key, [
+            'id' => $id,
+            'colorize' => $colorize,
+            'hide_name' => $hideName,
+        ], self::VISUAL_TTL);
+    }
+
+    /**
+     * @return array{body: string, mime: string}
+     */
+    private function resolveVisual(string $metaKey, string $bodyKey): array
+    {
+        $meta = Cache::get($metaKey);
+
+        if (! is_array($meta) || ! isset($meta['id'])) {
+            throw new RuntimeException('Logo introuvable.');
+        }
+
+        /** @var array{body: string, mime: string} $visual */
+        $visual = Cache::remember($bodyKey, self::VISUAL_TTL, function () use ($meta): array {
+            return $this->buildVisual(
+                (int) $meta['id'],
+                (bool) ($meta['colorize'] ?? false),
+                (bool) ($meta['hide_name'] ?? false)
+            );
+        });
+
+        return $visual;
+    }
+
+    /**
+     * @return array{body: string, mime: string}
+     */
+    private function buildVisual(int $id, bool $colorize, bool $hideName): array
+    {
+        $logo = Logo::query()->find($id);
+
+        if (! $logo) {
+            throw new RuntimeException('Logo introuvable.');
+        }
+
+        $svg = $this->svgFor($logo, $colorize);
+
+        if ($hideName) {
+            $svg = $this->hideBrandName($svg);
+        }
+
+        return $this->visualPayload($svg);
+    }
+
+    /**
+     * @return array{body: string, mime: string}
+     */
+    private function visualPayload(string $svg): array
+    {
+        if (preg_match('/<image[^>]+href="data:(image\/(?:png|jpeg|webp));base64,([^"]+)"/i', $svg, $matches) === 1) {
+            $bytes = base64_decode($matches[2], true);
+
+            if (is_string($bytes) && $bytes !== '') {
+                return [
+                    'body' => $bytes,
+                    'mime' => $matches[1],
+                ];
+            }
+        }
+
+        return [
+            'body' => $this->sanitizeSvg($svg),
+            'mime' => 'image/svg+xml; charset=utf-8',
+        ];
+    }
+
     private function svgFor(Logo $logo, bool $colorize = false): string
     {
         if (is_string($logo->svg) && $logo->svg !== '') {
-            $svg = $this->anonymizeSvg($logo->svg);
+            $raw = $logo->svg;
         } else {
             $response = $this->http(12)->get(
                 'https://cdn.jsdelivr.net/npm/simple-icons@'.self::SIMPLE_ICONS_VERSION.'/icons/'.$logo->slug.'.svg'
@@ -444,67 +524,62 @@ class LogoQuizService
             }
 
             $logo->update(['svg' => $response->body()]);
-            $svg = $this->anonymizeSvg($response->body());
+            $raw = $response->body();
         }
 
-        if ($colorize && is_string($logo->hex) && ! str_contains($svg, '<image')) {
+        if (str_contains($raw, '<image')) {
+            return $raw;
+        }
+
+        $svg = $this->sanitizeSvg($raw);
+
+        if ($colorize && is_string($logo->hex)) {
             return $this->colorizeSvg($svg, $logo->hex);
         }
 
         return $svg;
     }
 
-    private function anonymizeSvg(string $svg): string
+    private function sanitizeSvg(string $svg): string
     {
-        $svg = preg_replace('/<(title|desc)\b[^>]*>.*?<\/\1>/is', '', $svg) ?? $svg;
-        $svg = preg_replace('/\s(aria-label|aria-labelledby)="[^"]*"/i', '', $svg) ?? $svg;
+        $svg = preg_replace('/<(script|foreignObject|title|desc)\b[^>]*>.*?<\/\1>/is', '', $svg) ?? $svg;
+        $svg = preg_replace('/\s(aria-label|aria-labelledby|onload|onclick|onerror)="[^"]*"/i', '', $svg) ?? $svg;
 
         return preg_replace('/<!--.*?-->/s', '', $svg) ?? $svg;
     }
 
     private function hideBrandName(string $svg): string
     {
+        if (str_contains($svg, '<image')) {
+            return $svg;
+        }
+
         $stripped = preg_replace('/<(text|tspan|textPath)\b[^>]*>.*?<\/\1>/is', '', $svg) ?? $svg;
         $stripped = preg_replace('/<(text|tspan|textPath)\b[^>]*\/>/is', '', $stripped) ?? $stripped;
 
-        return $this->hasDrawableGeometry($stripped) ? $stripped : $svg;
+        return preg_match('/<(path|circle|ellipse|polygon|polyline|rect|image|use)\b/i', $stripped) === 1
+            ? $stripped
+            : $svg;
     }
 
-    private function isWordmark(Logo $logo): bool
+    private function isWordmarkPreview(string $preview): bool
     {
-        $svg = is_string($logo->svg) ? $logo->svg : '';
-
-        if ($svg === '') {
+        if ($preview === '') {
             return false;
         }
 
-        if (str_contains($svg, '<image')) {
+        if (str_contains($preview, '<image') || str_contains($preview, '<text') || str_contains($preview, '<tspan')) {
             return true;
         }
 
-        if (preg_match('/<(text|tspan|textPath)\b/i', $svg) === 1) {
-            $stripped = preg_replace('/<(text|tspan|textPath)\b[^>]*>.*?<\/\1>/is', '', $svg) ?? $svg;
-
-            if (! $this->hasDrawableGeometry($stripped)) {
-                return true;
-            }
-        }
-
-        if (preg_match('/viewBox="\s*[\d.\-eE]+\s+[\d.\-eE]+\s+([\d.\-eE]+)\s+([\d.\-eE]+)\s*"/i', $svg, $matches) === 1) {
+        if (preg_match('/viewBox="\s*[\d.\-eE]+\s+[\d.\-eE]+\s+([\d.\-eE]+)\s+([\d.\-eE]+)\s*"/i', $preview, $matches) === 1) {
             $width = (float) $matches[1];
             $height = (float) $matches[2];
 
-            if ($height > 0 && ($width / $height) >= 2.5) {
-                return true;
-            }
+            return $height > 0 && ($width / $height) >= 2.5;
         }
 
         return false;
-    }
-
-    private function hasDrawableGeometry(string $svg): bool
-    {
-        return preg_match('/<(path|circle|ellipse|polygon|polyline|rect|image|use)\b/i', $svg) === 1;
     }
 
     private function colorizeSvg(string $svg, string $hex): string
@@ -524,6 +599,26 @@ class LogoQuizService
         $open = preg_replace('/<svg\b/i', '<svg fill="'.$color.'" style="color:'.$color.'"', $open, 1) ?? $open;
 
         return preg_replace('/<svg\b[^>]*>/i', $open, $svg, 1) ?? $svg;
+    }
+
+    private function visualMetaKey(string $token): string
+    {
+        return 'logo_quiz.visual.'.$token;
+    }
+
+    private function visualBodyKey(string $token): string
+    {
+        return 'logo_quiz.visual_body.'.$token;
+    }
+
+    private function foundMetaKey(string $token): string
+    {
+        return 'logo_quiz.found.'.$token;
+    }
+
+    private function foundBodyKey(string $token): string
+    {
+        return 'logo_quiz.found_body.'.$token;
     }
 
     private function normalizeSlug(string $slug): string

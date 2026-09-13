@@ -12,6 +12,14 @@ fi
 
 PHP_BIN="${PHP_BIN:-php}"
 
+if [[ -f .env ]] && grep -qE '^APP_DEBUG=true' .env; then
+  echo "ATTENTION : APP_DEBUG=true sur le serveur. Passez-le à false en production." >&2
+fi
+
+if [[ -f .env ]] && grep -qE '^APP_ENV=local' .env; then
+  echo "ATTENTION : APP_ENV=local sur le serveur. Utilisez APP_ENV=production." >&2
+fi
+
 echo "==> Migrations"
 $PHP_BIN artisan migrate --force
 
