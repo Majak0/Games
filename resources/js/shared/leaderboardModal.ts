@@ -1,10 +1,22 @@
 import { fetchLeaderboard, renderLeaderboardRows } from '@/account/leaderboardTable';
-import { fetchModeCatalog, GAME_LABELS, type ModeCatalogEntry } from '@/account/modeCatalog';
+import {
+    fetchModeCatalog,
+    GAME_LABELS,
+    groupCatalogModes,
+    hasModeVariants,
+    variantGroupAriaLabel,
+    variantLabel,
+    type ModeCatalogEntry,
+    type ModeCatalogGroup,
+} from '@/account/modeCatalog';
 import modalHtml from './templates/html/leaderboardModal.html?raw';
 
 let catalogCache: ModeCatalogEntry[] | null = null;
 let activeLimit = 10;
 let activeGame = '';
+let activeGroupId: string | null = null;
+let activeMode: string | null = null;
+let currentGroups: ModeCatalogGroup[] = [];
 let cachedEntries: Awaited<ReturnType<typeof fetchLeaderboard>>['entries'] = [];
 
 function getModalRoot(): HTMLElement {
@@ -21,10 +33,71 @@ function getModalRoot(): HTMLElement {
     return root;
 }
 
-function populateModeSelect(select: HTMLSelectElement, modes: ModeCatalogEntry[]): void {
-    select.innerHTML = modes
-        .map((entry) => `<option value="${entry.mode}">${entry.label}</option>`)
-        .join('');
+function renderChoiceButtons(
+    container: HTMLElement,
+    items: Array<{ value: string; label: string }>,
+    dataKey: 'mode' | 'modeGroup',
+    activeValue: string | null,
+): void {
+    container.replaceChildren(
+        ...items.map((item) => {
+            const button = document.createElement('button');
+            const isActive = item.value === activeValue;
+
+            button.type = 'button';
+            button.className = `arcade-btn ${isActive ? 'arcade-btn--active' : 'arcade-btn--ghost'}`;
+            button.dataset[dataKey] = item.value;
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            button.textContent = item.label;
+
+            return button;
+        }),
+    );
+}
+
+function selectedGroup(): ModeCatalogGroup | undefined {
+    return currentGroups.find((group) => group.id === activeGroupId);
+}
+
+function selectGroup(group: ModeCatalogGroup): void {
+    activeGroupId = group.id;
+    activeMode = group.modes[0]?.mode ?? null;
+}
+
+function renderModeButtons(root: HTMLElement): void {
+    const container = root.querySelector('#leaderboard-modal-modes') as HTMLElement;
+
+    renderChoiceButtons(
+        container,
+        currentGroups.map((group) => ({ value: group.id, label: group.label })),
+        'modeGroup',
+        activeGroupId,
+    );
+}
+
+function renderDurationButtons(root: HTMLElement): void {
+    const container = root.querySelector('#leaderboard-modal-durations') as HTMLElement;
+    const group = selectedGroup();
+
+    if (!hasModeVariants(group)) {
+        container.hidden = true;
+        container.replaceChildren();
+        return;
+    }
+
+    container.hidden = false;
+    container.setAttribute('aria-label', variantGroupAriaLabel(group));
+    renderChoiceButtons(
+        container,
+        group.modes.map((entry) => ({ value: entry.mode, label: variantLabel(entry) })),
+        'mode',
+        activeMode,
+    );
+}
+
+function renderPickers(root: HTMLElement): void {
+    renderModeButtons(root);
+    renderDurationButtons(root);
 }
 
 function setActiveTab(root: HTMLElement, limit: number): void {
@@ -47,11 +120,9 @@ function renderRows(root: HTMLElement): void {
 }
 
 async function loadLeaderboard(root: HTMLElement): Promise<void> {
-    const modeSelect = root.querySelector('#leaderboard-modal-mode') as HTMLSelectElement;
     const subtitle = root.querySelector('#leaderboard-modal-subtitle') as HTMLParagraphElement;
-    const mode = modeSelect.value;
 
-    if (!activeGame || !mode) {
+    if (!activeGame || !activeMode) {
         cachedEntries = [];
         subtitle.textContent = '';
         renderRows(root);
@@ -62,7 +133,7 @@ async function loadLeaderboard(root: HTMLElement): Promise<void> {
     subtitle.textContent = 'Chargement…';
 
     try {
-        const data = await fetchLeaderboard(activeGame, mode);
+        const data = await fetchLeaderboard(activeGame, activeMode);
         cachedEntries = data.entries;
         subtitle.textContent = data.label;
         renderRows(root);
@@ -86,7 +157,8 @@ function openModal(root: HTMLElement): void {
 }
 
 function bindModalEvents(root: HTMLElement): void {
-    const modeSelect = root.querySelector('#leaderboard-modal-mode') as HTMLSelectElement;
+    const modeButtons = root.querySelector('#leaderboard-modal-modes') as HTMLElement;
+    const durationButtons = root.querySelector('#leaderboard-modal-durations') as HTMLElement;
 
     root.querySelectorAll('[data-close-modal]').forEach((element) => {
         element.addEventListener('click', () => closeModal(root));
@@ -101,7 +173,29 @@ function bindModalEvents(root: HTMLElement): void {
         });
     });
 
-    modeSelect.addEventListener('change', () => {
+    modeButtons.addEventListener('click', (event) => {
+        const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-mode-group]');
+        const group = currentGroups.find((entry) => entry.id === button?.dataset.modeGroup);
+
+        if (!group || group.id === activeGroupId) {
+            return;
+        }
+
+        selectGroup(group);
+        renderPickers(root);
+        void loadLeaderboard(root);
+    });
+
+    durationButtons.addEventListener('click', (event) => {
+        const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-mode]');
+        const mode = button?.dataset.mode;
+
+        if (!mode || mode === activeMode) {
+            return;
+        }
+
+        activeMode = mode;
+        renderPickers(root);
         void loadLeaderboard(root);
     });
 
@@ -115,7 +209,6 @@ function bindModalEvents(root: HTMLElement): void {
 export async function openLeaderboardModal(gameId: string): Promise<void> {
     const root = getModalRoot();
     const title = root.querySelector('#leaderboard-modal-title') as HTMLHeadingElement;
-    const modeSelect = root.querySelector('#leaderboard-modal-mode') as HTMLSelectElement;
 
     if (!catalogCache) {
         catalogCache = await fetchModeCatalog();
@@ -127,12 +220,19 @@ export async function openLeaderboardModal(gameId: string): Promise<void> {
         return;
     }
 
+    currentGroups = groupCatalogModes(modes);
+    const firstGroup = currentGroups[0];
+
+    if (!firstGroup) {
+        return;
+    }
+
     activeGame = gameId;
     activeLimit = 10;
+    selectGroup(firstGroup);
     setActiveTab(root, activeLimit);
-
     title.textContent = GAME_LABELS[gameId] ?? gameId;
-    populateModeSelect(modeSelect, modes);
+    renderPickers(root);
 
     openModal(root);
     await loadLeaderboard(root);

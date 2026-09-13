@@ -26,6 +26,14 @@ export const games: GameDefinition[] = [
         available: true,
     },
     {
+        id: 'logo-quiz',
+        title: 'Quiz des logos',
+        description: 'Reconnaissez les marques : logos floutés, noir et blanc, ou par catégorie.',
+        href: '/jeux/logo-quiz',
+        icon: 'bi-award-fill',
+        available: true,
+    },
+    {
         id: 'hasard',
         title: 'Jeux de hasard',
         description: 'Pile ou face, blackjack et autres jeux aléatoires.',

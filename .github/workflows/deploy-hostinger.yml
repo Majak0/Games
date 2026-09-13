@@ -139,8 +139,8 @@ jobs:
           script: |
             curl -sf -o /dev/null -w "HTTP %{http_code}\n" "https://arcadiahub.fr/up"
             HTML="$(curl -sfL "https://arcadiahub.fr/")"
-            echo "$HTML" | grep -q 'id="contact-fab"' || {
-              echo "ERREUR : la page d'accueil ne contient pas #contact-fab — mauvais DEPLOY_PATH ou cache obsolète." >&2
+            echo "$HTML" | grep -q 'id="site-nav"' || {
+              echo "ERREUR : la page d'accueil ne contient pas #site-nav — mauvais DEPLOY_PATH ou cache obsolète." >&2
               exit 1
             }
             MANIFEST_HASH="$(grep -o 'app-[A-Za-z0-9_-]*\.js' <<< "$HTML" | head -1)"

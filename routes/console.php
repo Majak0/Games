@@ -5,6 +5,68 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 
+Artisan::command('logos:sync {--insecure : Ignorer les erreurs SSL (Windows/dev)}', function () {
+    $service = app(\App\Services\LogoQuizService::class)->allowInsecureDownloads(
+        (bool) $this->option('insecure') || app()->environment('local')
+    );
+
+    try {
+        $result = $service->syncFromSimpleIcons();
+        $this->info("Logos importés en base : {$result['imported']}");
+        $this->info("Logos classés : {$result['categorized']}");
+
+        return 0;
+    } catch (\Throwable $exception) {
+        $this->error($exception->getMessage());
+
+        return 1;
+    }
+})->purpose('Importe le catalogue Simple Icons dans la table logos');
+
+Artisan::command('logos:categorize', function () {
+    $result = app(\App\Services\LogoQuizService::class)->applyCategories();
+    $this->info("Logos classés : {$result['assigned']}");
+
+    if ($result['counts'] === []) {
+        $this->comment('Aucune catégorie n’a encore de logo.');
+
+        return 0;
+    }
+
+    $this->table(
+        ['Catégorie', 'Logos'],
+        collect($result['counts'])->map(fn (int $count, string $id) => [$id, (string) $count])->values()->all()
+    );
+
+    return 0;
+})->purpose('Classe les logos déjà importés selon les catégories');
+
+Artisan::command('logos:import-wikidata {--insecure : Ignorer les erreurs SSL (Windows/dev)}', function () {
+    $importer = app(\App\Services\WikidataLogoImporter::class)->allowInsecureDownloads(
+        (bool) $this->option('insecure') || app()->environment('local')
+    );
+
+    try {
+        $result = $importer->import();
+        $this->info("Nouveaux logos Wikidata : {$result['imported']}");
+        $this->comment("Ignorés (déjà présents) : {$result['skipped']}");
+        $this->comment("Échecs de téléchargement : {$result['failed']}");
+
+        if ($result['counts'] !== []) {
+            $this->table(
+                ['Catégorie', 'Ajoutés'],
+                collect($result['counts'])->map(fn (int $count, string $id) => [$id, (string) $count])->values()->all()
+            );
+        }
+
+        return 0;
+    } catch (\Throwable $exception) {
+        $this->error($exception->getMessage());
+
+        return 1;
+    }
+})->purpose('Ajoute des logos de marques depuis Wikidata / Wikimedia Commons');
+
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');

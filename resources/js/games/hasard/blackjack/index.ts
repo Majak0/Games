@@ -44,6 +44,7 @@ interface BlackjackState {
     bankrollPersistenceEnabled: boolean;
     canClaimDailyBonus: boolean;
     dailyBonusAmount: number;
+    dailyBonusClaiming: boolean;
 }
 
 export function initBlackjack(root: HTMLElement): void {
@@ -74,6 +75,9 @@ export function initBlackjack(root: HTMLElement): void {
         dailyModal: '#blackjack-daily-modal',
         dailyMessage: '#blackjack-daily-message',
         btnClaimDaily: '#btn-claim-daily',
+        dailyBonus: '#daily-bonus',
+        btnDailyBonus: '#btn-daily-bonus',
+        dailyBonusLabel: '#daily-bonus-label',
     });
 
     if (!elements) {
@@ -99,6 +103,7 @@ export function initBlackjack(root: HTMLElement): void {
     const btnBetUp = elements.btnBetUp as HTMLButtonElement;
     const btnBetDown = elements.btnBetDown as HTMLButtonElement;
     const btnClaimDaily = elements.btnClaimDaily as HTMLButtonElement;
+    const btnDailyBonus = elements.btnDailyBonus as HTMLButtonElement;
 
     const helpModal = createModalController(elements.helpModal);
     helpModal.bindCloseTriggers('[data-close-help-modal]');
@@ -124,6 +129,7 @@ export function initBlackjack(root: HTMLElement): void {
         bankrollPersistenceEnabled: false,
         canClaimDailyBonus: false,
         dailyBonusAmount: DAILY_BONUS_AMOUNT,
+        dailyBonusClaiming: false,
     };
 
     function tableView(): { playerHand: Card[]; dealerHand: Card[]; dealerHoleHidden: boolean } {
@@ -148,7 +154,51 @@ export function initBlackjack(root: HTMLElement): void {
         state.canClaimDailyBonus = status.canClaimDailyBonus;
         state.dailyBonusAmount = status.dailyBonusAmount;
         updateBankrollUI();
+        updateDailyBonusUI();
         setActionState();
+    }
+
+    function updateDailyBonusUI(): void {
+        const bonusAmount = state.dailyBonusAmount || DAILY_BONUS_AMOUNT;
+        const canClaim = state.canClaimDailyBonus && !state.dailyBonusClaiming;
+
+        elements.dailyBonus.hidden = !state.bankrollPersistenceEnabled;
+        btnDailyBonus.disabled = !canClaim;
+        elements.dailyBonusLabel.textContent = state.dailyBonusClaiming
+            ? 'Récupération...'
+            : state.canClaimDailyBonus
+                ? `+ ${formatMoney(bonusAmount)} gratuits`
+                : 'Revenez demain';
+        btnDailyBonus.title = state.canClaimDailyBonus
+            ? `Récupérer ${formatMoney(bonusAmount)} de jetons gratuits`
+            : 'Déjà récupéré aujourd\'hui. Revenez demain.';
+        btnDailyBonus.setAttribute(
+            'aria-label',
+            state.canClaimDailyBonus
+                ? `Récupérer ${formatMoney(bonusAmount)} de jetons gratuits`
+                : 'Bonus quotidien déjà récupéré. Revenez demain.',
+        );
+    }
+
+    async function requestDailyBonus(): Promise<void> {
+        if (!state.canClaimDailyBonus || state.dailyBonusClaiming) {
+            return;
+        }
+
+        state.dailyBonusClaiming = true;
+        updateDailyBonusUI();
+
+        const status = await claimDailyBonus();
+        state.dailyBonusClaiming = false;
+
+        if (!status) {
+            updateDailyBonusUI();
+            return;
+        }
+
+        applyBankrollStatus(status);
+        setMessage(`Vous avez récupéré ${formatMoney(status.dailyBonusAmount)} de jetons gratuits.`, 'win');
+        dailyModal.close();
     }
 
     async function persistBankroll(): Promise<void> {
@@ -194,7 +244,7 @@ export function initBlackjack(root: HTMLElement): void {
         const bonusAmount = state.dailyBonusAmount || DAILY_BONUS_AMOUNT;
 
         if (state.canClaimDailyBonus) {
-            elements.dailyMessage.textContent = `Vos jetons quotidiens sont disponibles ! Récupérez ${formatMoney(bonusAmount)} pour rejouer.`;
+            elements.dailyMessage.textContent = `Vos jetons quotidiens sont disponibles ! Vous pouvez récupérer ${formatMoney(bonusAmount)}sv.`;
             btnClaimDaily.hidden = false;
             btnClaimDaily.textContent = `Récupérer ${formatMoney(bonusAmount)}`;
         } else {
@@ -212,14 +262,11 @@ export function initBlackjack(root: HTMLElement): void {
     }
 
     btnClaimDaily.addEventListener('click', () => {
-        void claimDailyBonus().then((status) => {
-            if (!status) {
-                return;
-            }
+        void requestDailyBonus();
+    });
 
-            applyBankrollStatus(status);
-            dailyModal.close();
-        });
+    btnDailyBonus.addEventListener('click', () => {
+        void requestDailyBonus();
     });
 
     function setActionState(): void {

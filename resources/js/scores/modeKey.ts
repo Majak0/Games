@@ -1,7 +1,8 @@
 import { getFlagQuizScoreKeyFromPath } from '@/games/flag-quiz/modes';
+import { getLogoQuizScoreKeyFromPath } from '@/games/logo-quiz/modes';
 import { getShapeQuizScoreKeyFromPath } from '@/games/shape-quiz/modes';
 
-export type ScoreGame = 'flag-quiz' | 'shape-quiz' | 'pile-ou-face' | 'blackjack';
+export type ScoreGame = 'flag-quiz' | 'shape-quiz' | 'logo-quiz' | 'pile-ou-face' | 'blackjack';
 
 export function buildFlagQuizScoreMode(pathname: string): string | null {
     return getFlagQuizScoreKeyFromPath(pathname);
@@ -22,6 +23,12 @@ export function getScoreContextFromPath(pathname: string): { game: ScoreGame; mo
 
     if (shapeMode) {
         return { game: 'shape-quiz', mode: shapeMode };
+    }
+
+    const logoMode = getLogoQuizScoreKeyFromPath(pathname);
+
+    if (logoMode) {
+        return { game: 'logo-quiz', mode: logoMode };
     }
 
     return null;

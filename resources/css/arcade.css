@@ -362,6 +362,84 @@
     object-fit: contain;
 }
 
+.arcade-logo-frame {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.85rem;
+    border-radius: 0.85rem;
+    background: linear-gradient(135deg, rgb(191 0 255 / 18%), rgb(57 255 20 / 10%));
+    border: 2px solid rgb(57 255 20 / 55%);
+    box-shadow:
+        0 0 28px rgb(57 255 20 / 35%),
+        0 0 56px rgb(191 0 255 / 18%);
+}
+
+.arcade-logo-frame__plate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(80vw, 16rem);
+    height: min(32vh, 14rem);
+    padding: 1.5rem;
+    border-radius: 0.55rem;
+    background: #f4f4f5;
+}
+
+.arcade-logo-frame__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.arcade-logo-frame__image--flou {
+    filter: blur(8px) contrast(0.92);
+}
+
+.arcade-logo-frame__image--nb {
+    filter: grayscale(1) contrast(1.15);
+}
+
+.arcade-logo-frame__image--color {
+    filter: none;
+}
+
+.arcade-logo-frame__image--wordmark {
+    filter: blur(12px) contrast(0.88);
+}
+
+.arcade-logo-frame__image--nb.arcade-logo-frame__image--wordmark {
+    filter: grayscale(1) blur(12px) contrast(1.05);
+}
+
+.arcade-logo-frame__image--flou.arcade-logo-frame__image--wordmark {
+    filter: blur(14px) contrast(0.86);
+}
+
+.arcade-logo-frame__image--color.arcade-logo-frame__image--wordmark {
+    filter: blur(12px) contrast(0.9);
+}
+
+.arcade-logo-thumb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0.3rem;
+    border-radius: 0.35rem;
+    background: #f4f4f5;
+}
+
+.arcade-logo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
 .arcade-flag-card {
     display: flex;
     flex-direction: column;
@@ -598,6 +676,31 @@
     grid-template-columns: auto 1fr auto;
 }
 
+.arcade-game-card--tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 11.5rem;
+    padding: 1.25rem 1rem;
+    text-align: center;
+}
+
+.arcade-game-card--tile .arcade-game-card__content {
+    min-width: 0;
+    width: 100%;
+}
+
+.arcade-game-card--tile .arcade-game-card__title {
+    font-size: 1rem;
+}
+
+.arcade-game-card--tile .arcade-game-card__description {
+    margin-top: 0.2rem;
+    font-size: 0.8125rem;
+}
+
 .arcade-game-card-wrap {
     display: flex;
     align-items: stretch;
@@ -695,6 +798,22 @@ body.arcade-modal-open {
 .arcade-modal__close:hover {
     border-color: rgb(255 255 255 / 45%);
     background: rgb(255 255 255 / 10%);
+}
+
+.arcade-modal-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.arcade-modal-picker[hidden] {
+    display: none;
+}
+
+.arcade-modal-picker .arcade-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
 }
 
 .arcade-tabs {
@@ -1058,26 +1177,155 @@ body.arcade-modal-open {
     margin-left: 0;
 }
 
-#account-fab {
+body.arcade-nav-open {
+    overflow: hidden;
+}
+
+.arcade-site-nav__toggle {
     position: fixed;
     top: 1rem;
-    right: 1rem;
-    z-index: 100;
+    left: 1rem;
+    z-index: 130;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 9999px;
+    border: 2px solid rgb(191 0 255 / 45%);
+    background: rgb(13 1 24 / 92%);
+    color: var(--color-neon-green);
+    cursor: pointer;
+    box-shadow: 0 0 18px rgb(191 0 255 / 25%);
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
 }
 
-body:has(.arcade-hud-bar) #account-fab {
-    top: 3.75rem;
+.arcade-site-nav__toggle:hover {
+    transform: scale(1.06);
+    border-color: rgb(57 255 20 / 70%);
+    box-shadow: 0 0 22px rgb(57 255 20 / 35%);
 }
 
-#contact-fab {
+.arcade-site-nav.is-open .arcade-site-nav__toggle {
+    border-color: rgb(57 255 20 / 55%);
+}
+
+body:has(.arcade-hud-bar) .arcade-site-nav__toggle {
+    top: 3.5rem;
+}
+
+body:has(.arcade-hud-bar) .arcade-site-nav.is-open .arcade-site-nav__toggle {
+    top: 1rem;
+}
+
+.arcade-site-nav__backdrop {
     position: fixed;
-    bottom: 1rem;
-    right: 1rem;
-    z-index: 100;
+    inset: 0;
+    z-index: 120;
+    background: rgb(0 0 0 / 62%);
+    backdrop-filter: blur(4px);
 }
 
-body:has(#contact-form) #contact-fab {
+.arcade-site-nav__backdrop[hidden] {
     display: none;
+}
+
+.arcade-site-nav__drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 125;
+    display: flex;
+    flex-direction: column;
+    width: min(20rem, 86vw);
+    height: 100%;
+    padding: 5.25rem 1.25rem 1.5rem;
+    border-right: 1px solid rgb(191 0 255 / 35%);
+    background: rgb(13 1 24 / 96%);
+    box-shadow: 18px 0 48px rgb(191 0 255 / 16%);
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition:
+        transform 0.22s ease,
+        visibility 0.22s ease;
+}
+
+.arcade-site-nav.is-open .arcade-site-nav__drawer {
+    transform: translateX(0);
+    visibility: visible;
+}
+
+.arcade-site-nav:not(.is-open) .arcade-site-nav__drawer {
+    pointer-events: none;
+}
+
+.arcade-site-nav__header {
+    margin-bottom: 1.5rem;
+}
+
+.arcade-site-nav__subtitle {
+    font-size: 0.8rem;
+    color: rgb(161 161 170);
+}
+
+.arcade-site-nav__links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.arcade-site-nav__link {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.85rem 1rem;
+    border-radius: 0.85rem;
+    border: 1px solid rgb(191 0 255 / 28%);
+    background: rgb(255 255 255 / 4%);
+    color: #fafafa;
+    font-weight: 600;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease,
+        box-shadow 0.15s ease,
+        color 0.15s ease;
+}
+
+.arcade-site-nav__link i {
+    display: inline-flex;
+    width: 1.25rem;
+    justify-content: center;
+    color: var(--color-neon-green);
+}
+
+.arcade-site-nav__link:hover,
+.arcade-site-nav__link.is-current {
+    border-color: rgb(57 255 20 / 50%);
+    background: rgb(57 255 20 / 10%);
+    box-shadow: 0 0 18px rgb(57 255 20 / 18%);
+}
+
+.arcade-site-nav__link--connected i {
+    color: var(--color-neon-green);
+}
+
+.arcade-site-nav__link-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    line-height: 1.2;
+}
+
+.arcade-site-nav__link-text small {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgb(161 161 170);
 }
 
 .arcade-contact-form .arcade-input,
@@ -1115,31 +1363,12 @@ body:has(#contact-form) #contact-fab {
     display: inline-block;
 }
 
-.arcade-account-fab {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 9999px;
-    border: 2px solid rgb(191 0 255 / 45%);
-    background: rgb(13 1 24 / 92%);
-    color: var(--color-neon-green);
-    box-shadow: 0 0 18px rgb(191 0 255 / 25%);
-    transition:
-        transform 0.15s ease,
-        box-shadow 0.2s ease,
-        border-color 0.2s ease;
-}
-
-.arcade-account-fab:hover {
-    transform: scale(1.06);
-    border-color: rgb(57 255 20 / 70%);
-    box-shadow: 0 0 22px rgb(57 255 20 / 35%);
-}
-
-.arcade-account-fab--connected {
-    border-color: rgb(57 255 20 / 55%);
+@media (prefers-reduced-motion: reduce) {
+    .arcade-site-nav__toggle,
+    .arcade-site-nav__drawer,
+    .arcade-site-nav__link {
+        transition: none;
+    }
 }
 
 .arcade-section-title {
@@ -1709,6 +1938,26 @@ body:has(#contact-form) #contact-fab {
     border-left: 1px solid rgb(255 255 255 / 12%);
 }
 
+.arcade-blackjack-daily {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+}
+
+.arcade-blackjack-daily[hidden] {
+    display: none;
+}
+
+.arcade-blackjack-daily .arcade-btn {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+}
+
+.arcade-blackjack-daily .arcade-btn[hidden] {
+    display: none;
+}
+
 .arcade-blackjack-bankroll,
 .arcade-blackjack-bet {
     display: flex;
@@ -1824,5 +2073,18 @@ body:has(#contact-form) #contact-fab {
 
 .arcade-blackjack-message--lose {
     color: var(--color-neon-pink);
+}
+
+@media (max-width: 768px) {
+    .arcade-blackjack-actions__bankroll {
+        padding-left: 0;
+        border-left: none;
+        justify-content: center;
+    }
+
+    .arcade-blackjack-daily {
+        align-items: center;
+        width: 100%;
+    }
 }
 

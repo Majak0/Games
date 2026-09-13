@@ -4,7 +4,16 @@ import { formatElapsedMicroseconds } from '@/games/shared/countryQuiz/timer';
 import { apiFetch } from '@/lib/api';
 import { fetchCurrentUser, logout } from '@/lib/auth';
 import { fetchLeaderboard, renderLeaderboardRows } from '@/account/leaderboardTable';
-import { fetchModeCatalog, groupModesByGame, type ModeCatalogEntry } from '@/account/modeCatalog';
+import {
+    fetchModeCatalog,
+    groupCatalogModes,
+    groupModesByGame,
+    hasModeVariants,
+    variantGroupAriaLabel,
+    variantLabel,
+    type ModeCatalogEntry,
+    type ModeCatalogGroup,
+} from '@/account/modeCatalog';
 import profileHtml from './templates/html/profile.html?raw';
 import profileRowHtml from './templates/html/profileRow.html?raw';
 
@@ -22,6 +31,7 @@ interface ProfileScoreRow {
 const PROFILE_GAME_TABS = [
     { game: 'shape-quiz', label: 'Pays' },
     { game: 'flag-quiz', label: 'Drapeaux' },
+    { game: 'logo-quiz', label: 'Logos' },
     { game: 'pile-ou-face', label: 'Pile/face' },
     { game: 'blackjack', label: 'Blackjack' },
 ] as const;
@@ -36,47 +46,6 @@ const HASARD_GAMES = new Set(['pile-ou-face', 'blackjack']);
 
 function isHasardGame(game: string): boolean {
     return HASARD_GAMES.has(game);
-}
-
-interface ProfileModeGroup {
-    id: string;
-    label: string;
-    modes: ModeCatalogEntry[];
-}
-
-function chronoMinutes(mode: string): number {
-    const match = /^chrono:(\d+)$/.exec(mode);
-
-    return match ? Number(match[1]) : 0;
-}
-
-function chronoDurationLabel(mode: string): string {
-    const minutes = chronoMinutes(mode);
-
-    return minutes > 0 ? `${minutes} min` : mode;
-}
-
-function groupCatalogModes(entries: ModeCatalogEntry[]): ProfileModeGroup[] {
-    const groups: ProfileModeGroup[] = [];
-    let chronoGroup: ProfileModeGroup | null = null;
-
-    for (const entry of entries) {
-        if (!entry.mode.startsWith('chrono:')) {
-            groups.push({ id: entry.mode, label: entry.label, modes: [entry] });
-            continue;
-        }
-
-        if (!chronoGroup) {
-            chronoGroup = { id: 'chrono', label: 'Contre-la-montre', modes: [] };
-            groups.push(chronoGroup);
-        }
-
-        chronoGroup.modes.push(entry);
-    }
-
-    chronoGroup?.modes.sort((left, right) => chronoMinutes(left.mode) - chronoMinutes(right.mode));
-
-    return groups;
 }
 
 function renderChoiceButtons(
@@ -144,11 +113,11 @@ function setupScorePicker(
     let activeGroup: string | null = null;
     let activeMode: string | null = null;
 
-    const currentGroups = (): ProfileModeGroup[] => (
+    const currentGroups = (): ModeCatalogGroup[] => (
         activeGame ? groupCatalogModes(grouped[activeGame] ?? []) : []
     );
 
-    const selectedGroup = (): ProfileModeGroup | undefined => (
+    const selectedGroup = (): ModeCatalogGroup | undefined => (
         currentGroups().find((group) => group.id === activeGroup)
     );
 
@@ -227,9 +196,8 @@ function setupScorePicker(
 
     const renderChronoDurations = (): void => {
         const group = selectedGroup();
-        const isChrono = group?.id === 'chrono' && (group.modes.length ?? 0) > 1;
 
-        if (!isChrono || !group) {
+        if (!hasModeVariants(group)) {
             chronoDurations.hidden = true;
             chronoDurations.replaceChildren();
 
@@ -237,9 +205,10 @@ function setupScorePicker(
         }
 
         chronoDurations.hidden = false;
+        chronoDurations.setAttribute('aria-label', variantGroupAriaLabel(group));
         renderChoiceButtons(
             chronoDurations,
-            group.modes.map((entry) => ({ value: entry.mode, label: chronoDurationLabel(entry.mode) })),
+            group.modes.map((entry) => ({ value: entry.mode, label: variantLabel(entry) })),
             'mode',
             activeMode
         );
@@ -276,7 +245,7 @@ function setupScorePicker(
         renderScores();
     };
 
-    const selectGroup = (group: ProfileModeGroup): void => {
+    const selectGroup = (group: ModeCatalogGroup): void => {
         activeGroup = group.id;
         activeMode = group.modes[0]?.mode ?? null;
     };

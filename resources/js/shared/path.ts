@@ -16,7 +16,7 @@ export function pathSegments(pathname: string): string[] {
     return normalizePath(pathname).split('/').filter(Boolean);
 }
 
-export type LeaderboardGame = 'flag-quiz' | 'shape-quiz';
+export type LeaderboardGame = 'flag-quiz' | 'shape-quiz' | 'logo-quiz';
 
 export function parseLeaderboardPath(pathname: string): { game: LeaderboardGame; mode: string } | null {
     const parts = pathSegments(pathname);
@@ -30,6 +30,7 @@ export function parseLeaderboardPath(pathname: string): { game: LeaderboardGame;
     switch (game) {
         case 'flag-quiz':
         case 'shape-quiz':
+        case 'logo-quiz':
             return { game, mode: parts[2] };
         default:
             return null;

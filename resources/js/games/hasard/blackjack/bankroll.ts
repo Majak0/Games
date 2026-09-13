@@ -10,14 +10,6 @@ export interface BankrollStatus {
     dailyBonusAmount: number;
 }
 
-function defaultStatus(bankroll: number): BankrollStatus {
-    return {
-        bankroll,
-        canClaimDailyBonus: false,
-        dailyBonusAmount: DAILY_BONUS_AMOUNT,
-    };
-}
-
 async function forAuthenticatedUser<T>(
     action: () => Promise<T>,
     fallback: T | null = null,
@@ -34,10 +26,7 @@ async function forAuthenticatedUser<T>(
 }
 
 export async function fetchBankrollStatus(): Promise<BankrollStatus | null> {
-    return forAuthenticatedUser(
-        () => apiFetch<BankrollStatus>('/api/blackjack/bankroll'),
-        defaultStatus(STARTING_BANKROLL),
-    );
+    return forAuthenticatedUser(() => apiFetch<BankrollStatus>('/api/blackjack/bankroll'));
 }
 
 export async function saveBankroll(bankroll: number): Promise<BankrollStatus | null> {

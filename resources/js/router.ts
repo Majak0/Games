@@ -16,6 +16,11 @@ import { initShapeChronoSetup } from '@/games/shape-quiz/chronoSetup';
 import { getShapeQuizModeFromPath } from '@/games/shape-quiz/modes';
 import { initShapeQuiz } from '@/games/shape-quiz';
 import { initShapeQuizSubmenu } from '@/games/shape-quiz/submenu';
+import { initLogoCategorySetup } from '@/games/logo-quiz/categorySetup';
+import { initLogoChronoSetup } from '@/games/logo-quiz/chronoSetup';
+import { getLogoQuizModeFromPath } from '@/games/logo-quiz/modes';
+import { initLogoQuiz } from '@/games/logo-quiz';
+import { initLogoQuizSubmenu } from '@/games/logo-quiz/submenu';
 import { normalizePath, parseLeaderboardPath } from '@/shared/path';
 
 export async function mountApp(root: HTMLElement): Promise<void> {
@@ -49,6 +54,15 @@ export async function mountApp(root: HTMLElement): Promise<void> {
         case '/jeux/shape-quiz/chrono':
             initShapeChronoSetup(root);
             return;
+        case '/jeux/logo-quiz':
+            initLogoQuizSubmenu(root);
+            return;
+        case '/jeux/logo-quiz/chrono':
+            initLogoChronoSetup(root);
+            return;
+        case '/jeux/logo-quiz/categories':
+            await initLogoCategorySetup(root);
+            return;
         case '/jeux/hasard':
             initHasardSubmenu(root);
             return;
@@ -78,6 +92,13 @@ export async function mountApp(root: HTMLElement): Promise<void> {
 
     if (flagMode) {
         await initFlagQuiz(root, flagMode);
+        return;
+    }
+
+    const logoMode = getLogoQuizModeFromPath(path);
+
+    if (logoMode) {
+        await initLogoQuiz(root, logoMode);
         return;
     }
 

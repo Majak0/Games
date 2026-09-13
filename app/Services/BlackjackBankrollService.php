@@ -55,8 +55,9 @@ class BlackjackBankrollService
         }
 
         $user->update([
-            'blackjack_bankroll' => self::DAILY_BONUS,
+            'blackjack_bankroll' => min(9999999, $user->blackjack_bankroll + self::DAILY_BONUS),
             'blackjack_bankrupt_at' => null,
+            'blackjack_daily_bonus_claimed_at' => now(),
         ]);
 
         return $this->payload($user->fresh() ?? $user);
@@ -72,11 +73,11 @@ class BlackjackBankrollService
 
     private function canClaimDailyBonus(User $user): bool
     {
-        if ($user->blackjack_bankroll !== 0 || $user->blackjack_bankrupt_at === null) {
-            return false;
+        if ($user->blackjack_daily_bonus_claimed_at === null) {
+            return true;
         }
 
-        return $user->blackjack_bankrupt_at->toDateString() < Carbon::now()->toDateString();
+        return $user->blackjack_daily_bonus_claimed_at->toDateString() < Carbon::now()->toDateString();
     }
 
     /**

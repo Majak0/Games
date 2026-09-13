@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\CountryAssetController;
 use App\Http\Controllers\Api\GameScoreController;
 use App\Http\Controllers\Api\LeaderboardController;
+use App\Http\Controllers\Api\LogoQuizController;
 use App\Models\Country;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +24,13 @@ Route::prefix('api')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth');
     Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:5,10');
+
+    Route::get('/logo-quiz/categories', [LogoQuizController::class, 'categories']);
+    Route::post('/logo-quiz/start', [LogoQuizController::class, 'start']);
+    Route::post('/logo-quiz/guess', [LogoQuizController::class, 'guess'])->middleware('throttle:60,1');
+    Route::post('/logo-quiz/skip', [LogoQuizController::class, 'skip'])->middleware('throttle:30,1');
+    Route::get('/logo-quiz/visual', [LogoQuizController::class, 'visual']);
+    Route::get('/logo-quiz/found/{token}', [LogoQuizController::class, 'found']);
 
     Route::get('/leaderboards/catalog', [LeaderboardController::class, 'catalog']);
     Route::get('/leaderboards/{game}/{mode}', [LeaderboardController::class, 'show']);

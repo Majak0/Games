@@ -11,10 +11,19 @@
             </button>
         </header>
 
-        <label class="flex flex-col gap-1 text-sm mb-4">
-            <span>Mode</span>
-            <select id="leaderboard-modal-mode" class="arcade-select"></select>
-        </label>
+        <div
+            id="leaderboard-modal-modes"
+            class="arcade-modal-picker"
+            role="group"
+            aria-label="Mode"
+        ></div>
+        <div
+            id="leaderboard-modal-durations"
+            class="arcade-modal-picker arcade-duration-picker"
+            role="group"
+            aria-label="Variante du mode"
+            hidden
+        ></div>
 
         <div class="arcade-tabs" role="tablist">
             <button type="button" class="arcade-tabs__tab arcade-tabs__tab--active" data-limit="10" role="tab" aria-selected="true">Top 10</button>

@@ -1,0 +1,13 @@
+<div class="arcade-screen min-h-screen flex flex-col items-center justify-center p-6 gap-8">
+    <header class="relative z-10 text-center">
+        <a href="/jeux/logo-quiz" class="arcade-btn arcade-btn--skip mb-6 inline-flex">
+            <i class="bi bi-arrow-left"></i> Retour aux modes
+        </a>
+        <p class="arcade-end-badge mb-3">Catégories</p>
+        <h1 class="arcade-end-title mb-2">Choisissez un secteur</h1>
+        <p class="text-sm text-zinc-400">Les logos apparaissent en couleur, uniquement dans la catégorie choisie.</p>
+    </header>
+    <div class="relative z-10 grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-4xl">
+        {{categories}}
+    </div>
+</div>
