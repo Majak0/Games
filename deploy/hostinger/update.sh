@@ -23,6 +23,9 @@ fi
 echo "==> Migrations"
 $PHP_BIN artisan migrate --force
 
+echo "==> Logos (import si la table est vide)"
+$PHP_BIN artisan logos:ensure || echo "ATTENTION : logos:ensure a échoué. Lancez php artisan logos:sync à la main."
+
 echo "==> Cache production"
 $PHP_BIN artisan config:clear
 $PHP_BIN artisan route:clear

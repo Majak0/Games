@@ -35,7 +35,7 @@ Route::prefix('api')->group(function () {
     Route::get('/logo-quiz/visual', [LogoQuizController::class, 'visual'])
         ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, ValidateCsrfToken::class]);
     Route::get('/logo-quiz/found/{token}', [LogoQuizController::class, 'found'])
-        ->where('token', '[A-Za-z0-9]{20,64}')
+        ->where('token', '[A-Za-z0-9\-_]+')
         ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, ValidateCsrfToken::class]);
 
     Route::get('/leaderboards/catalog', [LeaderboardController::class, 'catalog']);

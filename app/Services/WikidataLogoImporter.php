@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Logo;
 use App\Support\LogoCategories;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -20,9 +21,10 @@ class WikidataLogoImporter
     }
 
     /**
+     * @param  (callable(string): void)|null  $onProgress
      * @return array{imported: int, skipped: int, failed: int, counts: array<string, int>}
      */
-    public function import(): array
+    public function import(?int $maxImported = null, ?string $onlyCategory = null, ?callable $onProgress = null): array
     {
         /** @var array<string, array{industries: list<string>, types?: list<string>, min_sitelinks: int, limit: int}> $sources */
         $sources = require database_path('data/logo_wikidata_sources.php');
@@ -45,11 +47,18 @@ class WikidataLogoImporter
                 continue;
             }
 
+            if ($onlyCategory !== null && $onlyCategory !== $category) {
+                continue;
+            }
+
+            $onProgress?->__invoke("Catégorie {$category} : requête Wikidata…");
             $candidates = $this->searchCategory($config);
+            $onProgress?->__invoke("Catégorie {$category} : ".count($candidates).' candidats à filtrer.');
             $added = 0;
+            $categoryLimit = (int) $config['limit'];
 
             foreach ($candidates as $candidate) {
-                if ($added >= $config['limit']) {
+                if ($added >= $categoryLimit || ($maxImported !== null && $imported >= $maxImported)) {
                     break;
                 }
 
@@ -63,6 +72,8 @@ class WikidataLogoImporter
                     $skipped++;
                     continue;
                 }
+
+                $onProgress?->__invoke("Téléchargement Commons : {$candidate['name']}");
 
                 try {
                     $svg = $this->downloadLogo($candidate['logo']);
@@ -87,11 +98,17 @@ class WikidataLogoImporter
 
                 $imported++;
                 $added++;
-                usleep(80_000);
+                usleep(25_000);
             }
 
             $counts[$category] = $added;
+
+            if ($maxImported !== null && $imported >= $maxImported) {
+                break;
+            }
         }
+
+        Cache::forget('logo_quiz.categories');
 
         return [
             'imported' => $imported,

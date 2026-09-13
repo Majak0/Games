@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Logo;
 use App\Support\LogoCategories;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -15,7 +16,7 @@ class LogoQuizService
 
     public const SIMPLE_ICONS_VERSION = 'v16';
 
-    private const VISUAL_TTL = 3600;
+    private const VISUAL_TTL = 7200;
 
     private bool $allowInsecure = false;
 
@@ -76,6 +77,7 @@ class LogoQuizService
         $items = Cache::remember('logo_quiz.categories', 600, function (): array {
             $counts = Logo::query()
                 ->whereNotNull('category')
+                ->where($this->hasStoredVisual(...))
                 ->selectRaw('category, count(*) as aggregate')
                 ->groupBy('category')
                 ->pluck('aggregate', 'category');
@@ -138,7 +140,9 @@ class LogoQuizService
      */
     public function visualByToken(string $token): array
     {
-        return $this->resolveVisual($this->visualMetaKey($token), $this->visualBodyKey($token));
+        $meta = $this->decodeVisualToken($token);
+
+        return $this->buildVisual($meta['id'], $meta['colorize'], $meta['hide_name']);
     }
 
     /**
@@ -146,11 +150,11 @@ class LogoQuizService
      */
     public function foundByToken(string $token): array
     {
-        return $this->resolveVisual($this->foundMetaKey($token), $this->foundBodyKey($token));
+        return $this->visualByToken($token);
     }
 
     /**
-     * @return array{imported: int}
+     * @return array{imported: int, categorized: int, svgs: int}
      */
     public function syncFromSimpleIcons(): array
     {
@@ -169,7 +173,9 @@ class LogoQuizService
             throw new RuntimeException('Catalogue Simple Icons invalide.');
         }
 
+        $svgs = $this->simpleIconSvgMap();
         $imported = 0;
+        $storedSvgs = 0;
 
         foreach ($icons as $icon) {
             $slug = $icon['slug'] ?? null;
@@ -180,16 +186,23 @@ class LogoQuizService
             }
 
             $hex = $icon['hex'] ?? null;
+            $payload = [
+                'name' => $name,
+                'synonyms' => $this->synonymsFromIcon($icon),
+                'hex' => is_string($hex) && preg_match('/^[0-9A-Fa-f]{6}$/', $hex) === 1
+                    ? strtoupper($hex)
+                    : null,
+                'source' => 'simple-icons',
+            ];
+
+            if (isset($svgs[$slug])) {
+                $payload['svg'] = $svgs[$slug];
+                $storedSvgs++;
+            }
 
             Logo::query()->updateOrCreate(
                 ['slug' => $slug],
-                [
-                    'name' => $name,
-                    'synonyms' => $this->synonymsFromIcon($icon),
-                    'hex' => is_string($hex) && preg_match('/^[0-9A-Fa-f]{6}$/', $hex) === 1
-                        ? strtoupper($hex)
-                        : null,
-                ]
+                $payload
             );
 
             $imported++;
@@ -201,6 +214,7 @@ class LogoQuizService
         return [
             'imported' => $imported,
             'categorized' => $categorized['assigned'],
+            'svgs' => $storedSvgs,
         ];
     }
 
@@ -275,11 +289,11 @@ class LogoQuizService
             'remaining' => max(0, (int) $state['total'] - count($state['found'])),
             'score' => $state['score'],
             'completed' => $completed,
-            'visual_url' => $completed ? null : '/api/logo-quiz/visual?t='.$state['visual_token'],
+            'visual_url' => $completed ? null : '/api/logo-quiz/visual?t='.rawurlencode((string) $state['visual_token']),
             'wordmark' => (bool) ($state['wordmark'] ?? false),
             'found' => array_map(fn (array $item): array => [
                 'name' => $item['name'],
-                'visual_url' => '/api/logo-quiz/found/'.$item['token'],
+                'visual_url' => '/api/logo-quiz/found/'.rawurlencode((string) $item['token']),
             ], $state['found']),
         ];
     }
@@ -311,14 +325,13 @@ class LogoQuizService
      */
     private function advanceAfterCorrect(array $state): array
     {
-        $token = Str::random(24);
+        $token = $this->makeVisualToken((int) $state['current_id'], true, false);
 
         $state['found'][] = [
             'id' => $state['current_id'],
             'token' => $token,
             'name' => (string) ($state['current_name'] ?? 'Logo'),
         ];
-        $this->storeVisualMeta($this->foundMetaKey($token), (int) $state['current_id'], true, false);
         $state['score']++;
         $state['passed'] = array_values(array_filter(
             $state['passed'],
@@ -356,21 +369,18 @@ class LogoQuizService
             return $state;
         }
 
-        $token = Str::random(32);
         $state['current_id'] = $logo->id;
-        $state['visual_token'] = $token;
+        $state['visual_token'] = $this->makeVisualToken(
+            $logo->id,
+            ($state['style'] ?? 'flou') !== 'nb',
+            true
+        );
         $state['answers'] = array_map(
             fn (string $value): string => $this->normalize($value),
             $logo->answerList()
         );
         $state['current_name'] = $logo->name;
         $state['wordmark'] = $this->isWordmarkPreview((string) ($logo->preview ?? ''));
-        $this->storeVisualMeta(
-            $this->visualMetaKey($token),
-            $logo->id,
-            ($state['style'] ?? 'flou') !== 'nb',
-            true
-        );
 
         return $state;
     }
@@ -393,13 +403,18 @@ class LogoQuizService
 
     private function logoQuery(?string $category): \Illuminate\Database\Eloquent\Builder
     {
-        $query = Logo::query();
+        $query = Logo::query()->where($this->hasStoredVisual(...));
 
         if ($category !== null) {
             $query->where('category', $category);
         }
 
         return $query;
+    }
+
+    private function hasStoredVisual(\Illuminate\Database\Eloquent\Builder $query): void
+    {
+        $query->whereNotNull('svg')->where('svg', '!=', '');
     }
 
     /**
@@ -436,36 +451,45 @@ class LogoQuizService
         return (string) preg_replace('/\s+/', ' ', $text);
     }
 
-    private function storeVisualMeta(string $key, int $id, bool $colorize, bool $hideName): void
+    private function makeVisualToken(int $id, bool $colorize, bool $hideName): string
     {
-        Cache::put($key, [
+        $payload = Crypt::encryptString(json_encode([
             'id' => $id,
-            'colorize' => $colorize,
-            'hide_name' => $hideName,
-        ], self::VISUAL_TTL);
+            'c' => $colorize ? 1 : 0,
+            'h' => $hideName ? 1 : 0,
+            'exp' => time() + self::VISUAL_TTL,
+        ], JSON_THROW_ON_ERROR));
+
+        return rtrim(strtr($payload, '+/', '-_'), '=');
     }
 
     /**
-     * @return array{body: string, mime: string}
+     * @return array{id: int, colorize: bool, hide_name: bool}
      */
-    private function resolveVisual(string $metaKey, string $bodyKey): array
+    private function decodeVisualToken(string $token): array
     {
-        $meta = Cache::get($metaKey);
+        $raw = strtr($token, '-_', '+/');
+        $pad = strlen($raw) % 4;
 
-        if (! is_array($meta) || ! isset($meta['id'])) {
+        if ($pad !== 0) {
+            $raw .= str_repeat('=', 4 - $pad);
+        }
+
+        try {
+            $data = json_decode(Crypt::decryptString($raw), true, 8, JSON_THROW_ON_ERROR);
+        } catch (\Throwable) {
             throw new RuntimeException('Logo introuvable.');
         }
 
-        /** @var array{body: string, mime: string} $visual */
-        $visual = Cache::remember($bodyKey, self::VISUAL_TTL, function () use ($meta): array {
-            return $this->buildVisual(
-                (int) $meta['id'],
-                (bool) ($meta['colorize'] ?? false),
-                (bool) ($meta['hide_name'] ?? false)
-            );
-        });
+        if (! is_array($data) || ! isset($data['id']) || ($data['exp'] ?? 0) < time()) {
+            throw new RuntimeException('Logo introuvable.');
+        }
 
-        return $visual;
+        return [
+            'id' => (int) $data['id'],
+            'colorize' => (bool) ($data['c'] ?? false),
+            'hide_name' => (bool) ($data['h'] ?? false),
+        ];
     }
 
     /**
@@ -493,7 +517,7 @@ class LogoQuizService
      */
     private function visualPayload(string $svg): array
     {
-        if (preg_match('/<image[^>]+href="data:(image\/(?:png|jpeg|webp));base64,([^"]+)"/i', $svg, $matches) === 1) {
+        if (preg_match('/<image[^>]+(?:href|xlink:href)="data:(image\/(?:png|jpeg|webp));base64,([^"]+)"/i', $svg, $matches) === 1) {
             $bytes = base64_decode($matches[2], true);
 
             if (is_string($bytes) && $bytes !== '') {
@@ -588,6 +612,15 @@ class LogoQuizService
             return $svg;
         }
 
+        $red = hexdec(substr($hex, 0, 2));
+        $green = hexdec(substr($hex, 2, 2));
+        $blue = hexdec(substr($hex, 4, 2));
+        $luminance = (0.2126 * $red) + (0.7152 * $green) + (0.0722 * $blue);
+
+        if ($luminance > 220) {
+            return $svg;
+        }
+
         $color = '#'.$hex;
 
         if (preg_match('/<svg\b[^>]*>/i', $svg, $matches) !== 1) {
@@ -601,24 +634,106 @@ class LogoQuizService
         return preg_replace('/<svg\b[^>]*>/i', $open, $svg, 1) ?? $svg;
     }
 
-    private function visualMetaKey(string $token): string
+    /**
+     * @return array<string, string>
+     */
+    private function simpleIconSvgMap(): array
     {
-        return 'logo_quiz.visual.'.$token;
+        $version = $this->resolveSimpleIconsVersion();
+
+        if ($version === null) {
+            return [];
+        }
+
+        foreach ([
+            "https://codeload.github.com/simple-icons/simple-icons/zip/refs/tags/{$version}",
+            "https://github.com/simple-icons/simple-icons/archive/refs/tags/{$version}.zip",
+        ] as $url) {
+            $map = $this->extractSvgsFromZipUrl($url);
+
+            if ($map !== []) {
+                return $map;
+            }
+        }
+
+        return [];
     }
 
-    private function visualBodyKey(string $token): string
+    private function resolveSimpleIconsVersion(): ?string
     {
-        return 'logo_quiz.visual_body.'.$token;
+        $response = $this->http(30)
+            ->acceptJson()
+            ->get('https://registry.npmjs.org/simple-icons');
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        /** @var array{versions?: array<string, mixed>, dist-tags?: array<string, string>} $packument */
+        $packument = $response->json();
+        $wanted = ltrim(self::SIMPLE_ICONS_VERSION, 'v');
+        $matches = array_values(array_filter(
+            array_keys($packument['versions'] ?? []),
+            fn (string $version): bool => str_starts_with($version, $wanted.'.')
+        ));
+
+        usort($matches, version_compare(...));
+
+        $version = $matches === []
+            ? ($packument['dist-tags']['latest'] ?? null)
+            : $matches[array_key_last($matches)];
+
+        return is_string($version) && $version !== '' ? $version : null;
     }
 
-    private function foundMetaKey(string $token): string
+    /**
+     * @return array<string, string>
+     */
+    private function extractSvgsFromZipUrl(string $url): array
     {
-        return 'logo_quiz.found.'.$token;
-    }
+        $response = $this->http(120)->get($url);
 
-    private function foundBodyKey(string $token): string
-    {
-        return 'logo_quiz.found_body.'.$token;
+        if (! $response->successful() || strlen($response->body()) < 1000) {
+            return [];
+        }
+
+        $archive = tempnam(sys_get_temp_dir(), 'si');
+
+        if ($archive === false) {
+            return [];
+        }
+
+        file_put_contents($archive, $response->body());
+        $zip = new \ZipArchive;
+
+        if ($zip->open($archive) !== true) {
+            @unlink($archive);
+
+            return [];
+        }
+
+        $map = [];
+
+        for ($index = 0; $index < $zip->numFiles; $index++) {
+            $name = $zip->getNameIndex($index);
+
+            if (! is_string($name) || ! str_contains($name, '/icons/') || ! str_ends_with($name, '.svg')) {
+                continue;
+            }
+
+            $contents = $zip->getFromIndex($index);
+
+            if (! is_string($contents) || ! str_contains($contents, '<svg')) {
+                continue;
+            }
+
+            $map[basename($name, '.svg')] = $contents;
+        }
+
+        $zip->close();
+        @unlink($archive);
+
+        return $map;
     }
 
     private function normalizeSlug(string $slug): string

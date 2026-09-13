@@ -11,9 +11,15 @@ Artisan::command('logos:sync {--insecure : Ignorer les erreurs SSL (Windows/dev)
     );
 
     try {
+        $this->comment('Téléchargement du catalogue et du pack SVG Simple Icons (une archive, pas un fichier par logo)…');
         $result = $service->syncFromSimpleIcons();
         $this->info("Logos importés en base : {$result['imported']}");
+        $this->info("Visuels SVG enregistrés : {$result['svgs']}");
         $this->info("Logos classés : {$result['categorized']}");
+
+        if ($result['svgs'] === 0) {
+            $this->warn('Aucun SVG n’a pu être téléchargé. Relancez avec --insecure si SSL bloque (Windows).');
+        }
 
         return 0;
     } catch (\Throwable $exception) {
@@ -41,13 +47,23 @@ Artisan::command('logos:categorize', function () {
     return 0;
 })->purpose('Classe les logos déjà importés selon les catégories');
 
-Artisan::command('logos:import-wikidata {--insecure : Ignorer les erreurs SSL (Windows/dev)}', function () {
+Artisan::command('logos:import-wikidata {--insecure : Ignorer les erreurs SSL (Windows/dev)} {--limit= : Arrêter après N nouveaux logos} {--category= : Une seule catégorie}', function () {
     $importer = app(\App\Services\WikidataLogoImporter::class)->allowInsecureDownloads(
         (bool) $this->option('insecure') || app()->environment('local')
     );
+    $limitOption = $this->option('limit');
+    $maxImported = is_numeric($limitOption) ? max(1, (int) $limitOption) : null;
+    $category = $this->option('category');
+    $onlyCategory = is_string($category) && $category !== '' ? $category : null;
+
+    $this->comment('Import Wikidata : une requête SPARQL puis un téléchargement Commons par logo. Cela peut prendre plusieurs minutes.');
 
     try {
-        $result = $importer->import();
+        $result = $importer->import(
+            $maxImported,
+            $onlyCategory,
+            fn (string $message) => $this->line($message)
+        );
         $this->info("Nouveaux logos Wikidata : {$result['imported']}");
         $this->comment("Ignorés (déjà présents) : {$result['skipped']}");
         $this->comment("Échecs de téléchargement : {$result['failed']}");
@@ -66,6 +82,31 @@ Artisan::command('logos:import-wikidata {--insecure : Ignorer les erreurs SSL (W
         return 1;
     }
 })->purpose('Ajoute des logos de marques depuis Wikidata / Wikimedia Commons');
+
+Artisan::command('logos:ensure', function () {
+    $count = \App\Models\Logo::query()->count();
+    $categorized = \App\Models\Logo::query()->whereNotNull('category')->count();
+    $withVisual = \App\Models\Logo::query()->whereNotNull('svg')->where('svg', '!=', '')->count();
+    $service = app(\App\Services\LogoQuizService::class);
+
+    if ($count === 0 || $withVisual < max(50, (int) floor($count * 0.2))) {
+        $this->info($count === 0
+            ? 'Aucun logo en base : import Simple Icons…'
+            : 'Logos sans visuel en base : téléchargement du pack SVG…');
+        $result = $service->syncFromSimpleIcons();
+        $this->info("Logos importés : {$result['imported']} — SVG : {$result['svgs']} — classés : {$result['categorized']}");
+    } elseif ($categorized === 0) {
+        $this->info('Logos présents mais sans catégorie : classification…');
+        $result = $service->applyCategories();
+        $this->info("Logos classés : {$result['assigned']}");
+    } else {
+        $this->info("Logos déjà en place ({$count} dont {$categorized} classés, {$withVisual} avec visuel).");
+    }
+
+    \Illuminate\Support\Facades\Cache::forget('logo_quiz.categories');
+
+    return 0;
+})->purpose('Importe et classe les logos si la base de production est vide');
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
