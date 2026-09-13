@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\GameScoreController;
 use App\Http\Controllers\Api\LeaderboardController;
 use App\Http\Controllers\Api\LogoQuizController;
 use App\Models\Country;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\StartSession;
@@ -33,10 +34,20 @@ Route::prefix('api')->group(function () {
     Route::post('/logo-quiz/guess', [LogoQuizController::class, 'guess'])->middleware('throttle:60,1');
     Route::post('/logo-quiz/skip', [LogoQuizController::class, 'skip'])->middleware('throttle:30,1');
     Route::get('/logo-quiz/visual', [LogoQuizController::class, 'visual'])
-        ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, ValidateCsrfToken::class]);
+        ->withoutMiddleware([
+            StartSession::class,
+            ShareErrorsFromSession::class,
+            PreventRequestForgery::class,
+            ValidateCsrfToken::class,
+        ]);
     Route::get('/logo-quiz/found/{token}', [LogoQuizController::class, 'found'])
         ->where('token', '[A-Za-z0-9\-_]+')
-        ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, ValidateCsrfToken::class]);
+        ->withoutMiddleware([
+            StartSession::class,
+            ShareErrorsFromSession::class,
+            PreventRequestForgery::class,
+            ValidateCsrfToken::class,
+        ]);
 
     Route::get('/leaderboards/catalog', [LeaderboardController::class, 'catalog']);
     Route::get('/leaderboards/{game}/{mode}', [LeaderboardController::class, 'show']);

@@ -93,7 +93,6 @@ class LogoQuizController extends Controller
                 'Content-Type' => $visual['mime'],
                 'Cache-Control' => 'private, max-age=3600',
                 'X-Content-Type-Options' => 'nosniff',
-                'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:",
             ]);
         } catch (RuntimeException) {
             abort(HttpResponse::HTTP_NOT_FOUND);
